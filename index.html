@@ -1,0 +1,918 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stretch Deck</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#e0602a">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --ink:#161d19;
+    --ink-dim:#5b6960;
+    --ground:#f2f1ea;
+    --surface:#fffdf8;
+    --surface-2:#e8ebe3;
+    --line:#d7dccf;
+    --accent:#e0602a;
+    --accent-ink:#ffffff;
+    --band-warmup:#d9a441;
+    --band-mobility:#5c8c5a;
+    --band-post:#3f7d8c;
+    --band-office:#b6462f;
+    --band-shoulders:#4a4550;
+    --shadow: 0 1px 2px rgba(20,24,18,.06), 0 8px 24px -12px rgba(20,24,18,.18);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --ink:#eef1ea;
+      --ink-dim:#93a099;
+      --ground:#141b17;
+      --surface:#1c2521;
+      --surface-2:#232e28;
+      --line:#333f37;
+      --accent:#ef7a44;
+      --accent-ink:#161d19;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 28px -14px rgba(0,0,0,.55);
+      color-scheme: dark;
+    }
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ground);
+    color:var(--ink);
+    font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    padding-inline:16px;
+    padding-block:0 32px;
+  }
+  h1,h2,h3, .display{
+    font-family:"Barlow Condensed", ui-sans-serif, system-ui, sans-serif;
+    text-transform:uppercase;
+    letter-spacing:.02em;
+    text-wrap:balance;
+  }
+  .mono{ font-family:"IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  a{color:inherit;}
+  button{font-family:inherit; cursor:pointer;}
+  input,select,textarea{font-family:inherit; font-size:15px;}
+  .wrap{max-width:920px; margin-inline:auto;}
+
+  .topbar{
+    position:sticky; top:0; z-index:30;
+    background:var(--ground);
+    padding-block:18px 12px;
+    display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+    border-bottom:1px solid transparent;
+  }
+  .topbar.scrolled{border-bottom-color:var(--line);}
+  .brand{display:flex; align-items:baseline; gap:10px;}
+  .brand .mark{
+    display:inline-flex; width:30px; height:30px; border-radius:8px;
+    background:var(--accent); color:var(--accent-ink);
+    align-items:center; justify-content:center;
+    font-family:"Barlow Condensed"; font-weight:700; font-size:17px;
+    transform:translateY(3px);
+  }
+  .brand h1{font-size:26px; margin:0; font-weight:600; letter-spacing:.03em;}
+  .crumbs{font-size:13px; color:var(--ink-dim); display:flex; align-items:center; gap:6px;}
+  .crumbs button{background:none;border:none;color:inherit;padding:2px 0;font-size:13px;text-decoration:underline;text-underline-offset:2px;text-decoration-color:var(--line);}
+  .topbar-actions{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+
+  .btn{
+    border:1px solid var(--line); background:var(--surface); color:var(--ink);
+    padding:9px 14px; border-radius:9px; font-size:14px; font-weight:500;
+    display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
+  }
+  .btn:focus-visible, a:focus-visible, [tabindex]:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  .btn.primary{background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:600;}
+  .btn.ghost{background:transparent; border-color:transparent;}
+  .btn.small{padding:6px 10px; font-size:13px; border-radius:7px;}
+  .btn:disabled{opacity:.45; cursor:default;}
+
+  .view{display:none;}
+  .view.active{display:block; animation:fade .2s ease both;}
+  @media (prefers-reduced-motion: reduce){ .view.active{animation:none;} }
+  @keyframes fade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;}}
+
+  .section-label{
+    font-size:13px; text-transform:uppercase; letter-spacing:.12em; color:var(--ink-dim);
+    font-weight:600; margin:28px 0 12px;
+  }
+  .section-label:first-child{margin-top:8px;}
+
+  .cat-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(190px,1fr)); gap:12px; }
+  .cat-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    padding:16px; text-align:left; box-shadow:var(--shadow);
+    display:flex; flex-direction:column; gap:22px; min-height:118px;
+    position:relative; overflow:hidden;
+  }
+  .cat-card::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background:var(--band); }
+  .cat-card .name{font-size:20px; font-weight:600; line-height:1.15; padding-right:6px;}
+  .cat-card .count{font-size:13px; color:var(--ink-dim); margin-top:auto;}
+  .cat-card .count b{color:var(--ink); font-family:"IBM Plex Mono"; font-weight:600;}
+  .cat-card-new{
+    border:1px dashed var(--line); background:transparent; border-radius:14px;
+    display:flex; align-items:center; justify-content:center; min-height:118px;
+    color:var(--ink-dim); font-size:14px; gap:6px;
+  }
+
+  .ex-list{display:flex; flex-direction:column; gap:10px;}
+  .ex-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:12px;
+    padding:14px 16px; box-shadow:var(--shadow);
+    display:grid; grid-template-columns:1fr auto; gap:10px 14px; align-items:start;
+  }
+  .ex-main .title{font-size:17px; font-weight:600; margin:0 0 3px;}
+  .ex-meta{display:flex; flex-wrap:wrap; gap:6px 10px; font-size:12.5px; color:var(--ink-dim); margin-bottom:6px;}
+  .ex-meta span{display:inline-flex; align-items:center; gap:4px;}
+  .ex-notes{font-size:13.5px; color:var(--ink-dim); line-height:1.45; max-width:60ch;}
+  .ex-actions{display:flex; flex-direction:column; gap:6px; align-items:stretch;}
+  .ex-actions .btn{justify-content:center;}
+  .ex-rowbtns{display:flex; gap:6px;}
+  .tag{
+    display:inline-block; font-size:11px; text-transform:uppercase; letter-spacing:.06em;
+    padding:2px 7px; border-radius:5px; background:var(--surface-2); color:var(--ink-dim); font-weight:600;
+  }
+  .tag.warn{color:#a94a2c;}
+  .empty{ color:var(--ink-dim); font-size:14px; padding:28px 16px; text-align:center; border:1px dashed var(--line); border-radius:12px; }
+
+  .routine-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:12px;
+    padding:14px 16px; box-shadow:var(--shadow);
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  }
+  .routine-card .name{font-size:17px; font-weight:600;}
+  .routine-card .sub{font-size:12.5px; color:var(--ink-dim);}
+
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(10,12,10,.5); backdrop-filter:blur(2px);
+    display:none; align-items:flex-end; justify-content:center; z-index:100; padding:0;
+  }
+  .modal-backdrop.open{display:flex;}
+  @media (min-width:640px){ .modal-backdrop{align-items:center; padding:20px;} }
+  .modal{
+    background:var(--surface); width:100%; max-width:520px; border-radius:16px 16px 0 0;
+    padding:20px 20px calc(20px + env(safe-area-inset-bottom));
+    max-height:90vh; overflow-y:auto; box-shadow:var(--shadow);
+  }
+  @media (min-width:640px){ .modal{border-radius:16px;} }
+  .modal h2{margin:0 0 14px; font-size:22px;}
+  .field{display:flex; flex-direction:column; gap:5px; margin-bottom:12px;}
+  .field label{font-size:12.5px; color:var(--ink-dim); text-transform:uppercase; letter-spacing:.06em; font-weight:600;}
+  .field input, .field select, .field textarea{
+    background:var(--surface-2); border:1px solid var(--line); border-radius:8px;
+    padding:9px 10px; color:var(--ink); width:100%;
+  }
+  .field textarea{resize:vertical; min-height:56px;}
+  .field-row{display:flex; gap:10px;}
+  .field-row .field{flex:1;}
+  .modal-actions{display:flex; justify-content:flex-end; gap:8px; margin-top:14px;}
+  .hint{font-size:12.5px; color:var(--ink-dim); margin-top:5px; line-height:1.4;}
+
+  .checklist{display:flex; flex-direction:column; gap:6px; max-height:44vh; overflow-y:auto; border:1px solid var(--line); border-radius:10px; padding:6px;}
+  .checkrow{display:flex; align-items:center; gap:10px; padding:8px 8px; border-radius:7px;}
+  .checkrow:hover{background:var(--surface-2);}
+  .checkrow .band-dot{width:8px; height:8px; border-radius:50%; background:var(--band); flex:none;}
+  .checkrow span{font-size:14px; flex:1;}
+  .checkrow .cat{font-size:11.5px; color:var(--ink-dim);}
+
+  .player{ position:fixed; inset:0; background:var(--ground); z-index:200; display:none; flex-direction:column; }
+  .player.open{display:flex;}
+  .player-top{display:flex; align-items:center; justify-content:space-between; padding:16px 18px;}
+  .player-progress{font-size:12.5px; color:var(--ink-dim); letter-spacing:.06em; text-transform:uppercase; font-weight:600;}
+  .player-body{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; gap:18px; text-align:center; overflow-y:auto;}
+  .player-band{width:64px; height:6px; border-radius:99px; background:var(--band);}
+  .player-title{font-size:clamp(28px,7vw,44px); font-weight:700; margin:0; max-width:16ch;}
+  .player-meta{font-size:15px; color:var(--ink-dim);}
+  .timer{font-size:clamp(48px,16vw,88px); font-weight:600; line-height:1;}
+  .player-notes{max-width:44ch; color:var(--ink-dim); font-size:14.5px; line-height:1.5;}
+  .player-controls{display:flex; gap:10px; padding:18px; justify-content:center; flex-wrap:wrap;}
+  .player-controls .btn{padding:12px 18px; font-size:15px;}
+  .player-video{width:100%; max-width:420px; border-radius:14px; background:#000;}
+  .player-video-missing{
+    width:100%; max-width:420px; border-radius:14px; border:1px dashed var(--line);
+    padding:22px; font-size:13px; color:var(--ink-dim);
+  }
+
+  .toast{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    background:var(--ink); color:var(--ground); padding:10px 16px; border-radius:99px;
+    font-size:13.5px; z-index:300; opacity:0; pointer-events:none; transition:opacity .25s, transform .25s;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(-6px);}
+  .icon-btn{width:32px; height:32px; border-radius:8px; border:1px solid var(--line); background:var(--surface); display:inline-flex; align-items:center; justify-content:center; font-size:15px; color:var(--ink-dim);}
+
+  .ex-video{width:100%; border-radius:10px; margin:8px 0; background:#000; display:block; max-height:240px;}
+  .ex-video-missing{
+    font-size:12.5px; color:#a94a2c; background:rgba(185,74,44,.1); border:1px solid rgba(185,74,44,.25);
+    border-radius:8px; padding:6px 9px; margin:8px 0;
+  }
+  .filepick{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  }
+  .filepick input[type="text"]{flex:1; min-width:140px;}
+  #setupBanner{
+    background:var(--surface); border:1px solid var(--line); border-radius:12px;
+    padding:14px 16px; font-size:13.5px; color:var(--ink-dim); line-height:1.55; margin-bottom:18px;
+  }
+  #setupBanner b{color:var(--ink);}
+  #setupBanner code{background:var(--surface-2); padding:1px 5px; border-radius:4px; font-family:"IBM Plex Mono";}
+  #setupBanner .close{float:right; border:none; background:none; color:var(--ink-dim); font-size:16px;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="topbar" id="topbar">
+    <div class="brand">
+      <span class="mark">SD</span>
+      <div>
+        <h1>Stretch Deck</h1>
+        <div class="crumbs" id="crumbs"></div>
+      </div>
+    </div>
+    <div class="topbar-actions" id="topbarActions"></div>
+  </div>
+
+  <div id="setupBanner" style="display:none;">
+    <button class="close" id="setupBannerClose" aria-label="Dismiss">✕</button>
+    Videos play from <code>videos/&lt;category folder&gt;/</code>, right next to this file — each category owns one
+    subfolder, matched by name. When adding an exercise, pick the category first, then type the file name or use
+    <b>Browse</b> to fill it in (Browse only reads the name — put the actual mp4 in that folder yourself). Everything
+    you add is saved in this browser (<code>localStorage</code>) — use <b>Backup</b> occasionally so a cleared
+    browser can't lose your library.
+  </div>
+
+  <!-- HOME -->
+  <div class="view active" id="view-home">
+    <div class="section-label">Categories</div>
+    <div class="cat-grid" id="catGrid"></div>
+
+    <div class="section-label">Routines</div>
+    <div class="ex-list" id="routineList"></div>
+  </div>
+
+  <!-- CATEGORY -->
+  <div class="view" id="view-category">
+    <div class="ex-list" id="exList"></div>
+  </div>
+</div>
+
+<!-- exercise modal -->
+<div class="modal-backdrop" id="exModalBackdrop">
+  <div class="modal">
+    <h2 id="exModalTitle">Add exercise</h2>
+    <form id="exForm">
+      <div class="field">
+        <label for="fTitle">Exercise name</label>
+        <input id="fTitle" required placeholder="e.g. Couch stretch">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="fCategory">Category</label>
+          <select id="fCategory"></select>
+        </div>
+        <div class="field">
+          <label for="fDuration">Duration / reps</label>
+          <input id="fDuration" placeholder="e.g. 45s each side">
+        </div>
+      </div>
+      <div class="field">
+        <label for="fEquipment">Equipment</label>
+        <input id="fEquipment" placeholder="e.g. none, or resistance band">
+      </div>
+      <div class="field">
+        <label for="fLink">Reel link (optional, Instagram / Facebook / YouTube)</label>
+        <input id="fLink" type="url" placeholder="https://...">
+      </div>
+      <div class="field">
+        <label for="fVideoFile">Local video file</label>
+        <div class="filepick">
+          <input id="fVideoFile" type="text" placeholder="e.g. couch-stretch.mp4">
+          <button type="button" class="btn small" id="videoBrowseBtn">Browse…</button>
+          <input id="videoBrowseInput" type="file" accept="video/*" style="display:none;">
+        </div>
+        <div class="hint" id="videoFieldHint">File name only — it's read from <code id="videoFieldFolder">videos/…</code>, the folder for whichever category you pick above. Use Browse to fill it in (that only reads the name, it doesn't move or upload anything).</div>
+      </div>
+      <div class="field">
+        <label for="fNotes">Setup notes / cues</label>
+        <textarea id="fNotes" placeholder="Anything to remember without rewatching: setup, cue, modification..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" id="exCancel">Cancel</button>
+        <button type="submit" class="btn primary">Save exercise</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- category modal -->
+<div class="modal-backdrop" id="catModalBackdrop">
+  <div class="modal">
+    <h2>New category</h2>
+    <form id="catForm">
+      <div class="field">
+        <label for="cName">Name</label>
+        <input id="cName" required placeholder="e.g. Calves">
+      </div>
+      <div class="field">
+        <label for="cFolder">Video folder name</label>
+        <input id="cFolder" required placeholder="e.g. Calves">
+        <div class="hint">Must exactly match a folder you create under <code>videos/</code> — that's where this category's clips will live.</div>
+      </div>
+      <div class="field">
+        <label for="cColor">Colour tag</label>
+        <input id="cColor" type="color" value="#e0602a" style="height:38px; padding:4px;">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" id="catCancel">Cancel</button>
+        <button type="submit" class="btn primary">Create</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- routine builder modal -->
+<div class="modal-backdrop" id="routineModalBackdrop">
+  <div class="modal">
+    <h2>New routine</h2>
+    <form id="routineForm">
+      <div class="field">
+        <label for="rName">Routine name</label>
+        <input id="rName" required placeholder="e.g. Before training — 6 min">
+      </div>
+      <div class="field">
+        <label>Pick exercises, in order</label>
+        <div class="checklist" id="routineChecklist"></div>
+        <div class="hint">Tap to add — order follows tap order. Tap again to remove.</div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" id="routineCancel">Cancel</button>
+        <button type="submit" class="btn primary">Save routine</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- player -->
+<div class="player" id="player">
+  <div class="player-top">
+    <span class="player-progress" id="playerProgress"></span>
+    <button class="icon-btn" id="playerExit" aria-label="Exit routine">✕</button>
+  </div>
+  <div class="player-body">
+    <div class="player-band" id="playerBand"></div>
+    <h2 class="player-title" id="playerTitle"></h2>
+    <div class="player-meta" id="playerMeta"></div>
+    <video class="player-video" id="playerVideo" controls playsinline style="display:none;"></video>
+    <div class="player-video-missing" id="playerVideoMissing" style="display:none;">No local video file for this one yet — use Watch reference or add a file name in Edit.</div>
+    <div class="timer mono" id="playerTimer"></div>
+    <div class="player-notes" id="playerNotes"></div>
+  </div>
+  <div class="player-controls">
+    <button class="btn" id="playerWatch">▶ Watch reference</button>
+    <button class="btn" id="playerPrev">⟵ Back</button>
+    <button class="btn" id="playerPauseResume">Pause</button>
+    <button class="btn primary" id="playerNext">Next ⟶</button>
+  </div>
+</div>
+
+<input id="importInput" type="file" accept="application/json" style="display:none;">
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = "stretchdeck:v2";
+  var VIDEO_CACHE_NAME = "stretchdeck-videos-v1";
+  var deferredInstallPrompt = null;
+  // One folder per category under videos/ — this is the real layout on disk.
+  var DEFAULT_CATEGORIES = [{"id": "abductors", "name": "Abductors", "color": "#d9a441", "order": 0, "folder": "Abductors"}, {"id": "back", "name": "Back", "color": "#5c8c5a", "order": 1, "folder": "Back"}, {"id": "chest", "name": "Chest", "color": "#3f7d8c", "order": 2, "folder": "Chest"}, {"id": "core-rotation", "name": "Core Rotation", "color": "#b6462f", "order": 3, "folder": "Core Rotation"}, {"id": "glutes", "name": "Glutes", "color": "#4a4550", "order": 4, "folder": "Glutes"}, {"id": "hamstrings", "name": "Hamstrings", "color": "#7a5c99", "order": 5, "folder": "Hamstrings"}, {"id": "hip-mobility", "name": "Hip Mobility", "color": "#2f7a63", "order": 6, "folder": "Hip mobility"}, {"id": "isometric-stability", "name": "Isometric Stability", "color": "#a8763e", "order": 7, "folder": "ISometric Stability"}, {"id": "leg-strength", "name": "Leg Strength", "color": "#d9a441", "order": 8, "folder": "Leg strength"}, {"id": "misc", "name": "Misc", "color": "#5c8c5a", "order": 9, "folder": "Misc"}, {"id": "plyometrics", "name": "Plyometrics", "color": "#3f7d8c", "order": 10, "folder": "Plyometrics"}, {"id": "shoulders", "name": "Shoulders", "color": "#b6462f", "order": 11, "folder": "Shoulders"}, {"id": "warm-up-strech", "name": "Warm-up / Stretch", "color": "#4a4550", "order": 12, "folder": "Warm-up- Strech"}];
+  // One entry per video file found in those folders on the last scan. Titles
+  // are placeholders — open each, watch it, and rename/fill it in properly.
+  var SEED_EXERCISES = [{"id": "seed-1", "category": "abductors", "title": "Untitled clip 1 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQPs9IlZsoxZyqKLeTQbtY4CyfANRx_7pyV03mgOkFGlSJZ0-4_WSyaEaPOjguZZLxtXqAqIK2KzsEq8yn1vX6mr-KlF791Dn0pmuyI.mp4", "notes": "Auto-added from your videos/Abductors folder — open it, then fill in the real name, duration and cue.", "order": 0}, {"id": "seed-2", "category": "back", "title": "Untitled clip 1 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOZPzPn9tVviXBUrdG-1COv7Cd6o4AVQXu6_hkjF9X3JLcsNYrBZXLuP3xO9iK257izKFjxoIxoDOnszi5HNgVmIy-x3V5eqx-pq4Y.mp4", "notes": "Auto-added from your videos/Back folder — open it, then fill in the real name, duration and cue.", "order": 0}, {"id": "seed-3", "category": "back", "title": "Untitled clip 2 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOcbdiNeOzLYG6uUdBTFRROsMD173OZc7LhUoYKh4zhcoWXwWpRYyDeq5nvrG3q8tLLtZnQm0zIaVfTi-fs8idXfAENR49E6Xr6qgQ.mp4", "notes": "Auto-added from your videos/Back folder — open it, then fill in the real name, duration and cue.", "order": 1}, {"id": "seed-4", "category": "chest", "title": "Untitled clip 1 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQNBM355Z0I7MSd3uf9xuAvpYGPPkpaejUdf12ny7A15HPftOVeGw16YZIH3_0HwRO7NzSiljF_tctgBe_FnyNI_jExsbt4RzHBxM14.mp4", "notes": "Auto-added from your videos/Chest folder — open it, then fill in the real name, duration and cue.", "order": 0}, {"id": "seed-5", "category": "chest", "title": "Untitled clip 2 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOZPzPn9tVviXBUrdG-1COv7Cd6o4AVQXu6_hkjF9X3JLcsNYrBZXLuP3xO9iK257izKFjxoIxoDOnszi5HNgVmIy-x3V5eqx-pq4Y.mp4", "notes": "Auto-added from your videos/Chest folder — open it, then fill in the real name, duration and cue.", "order": 1}, {"id": "seed-6", "category": "chest", "title": "Untitled clip 3 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOuVMfuEeax712zpmWAmzeKBj6DTnO-jmJg1N_wS-jbmGifljvaKid4dHoKbmV0u9--JHIOgFTWv9wY23JBHKIMHoGBogulxDGhM_M.mp4", "notes": "Auto-added from your videos/Chest folder — open it, then fill in the real name, duration and cue.", "order": 2}, {"id": "seed-7", "category": "core-rotation", "title": "Untitled clip 1 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQM5x2Bj1UDm39B4mBxYy9gdosXQ1qWxJO8YWKsN8muIQCBMXsnAIT-XxOfikUA2N4HMbsfKoQGZI-smRPF_sr-2JER3rf-ZgFGei_o.mp4", "notes": "Auto-added from your videos/Core Rotation folder — open it, then fill in the real name, duration and cue.", "order": 0}, {"id": "seed-8", "category": "core-rotation", "title": "Untitled clip 2 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQMGtvPBQSZV-oWg9Q_N58uvX1ysGvaSYx0BrglHYtl0-QscR-5ZCpy9c9l4_CJZZZwVViJa831ZPyJXNGyrBRiSZGhQ-y_KaLyWR94.mp4", "notes": "Auto-added from your videos/Core Rotation folder — open it, then fill in the real name, duration and cue.", "order": 1}, {"id": "seed-9", "category": "core-rotation", "title": "Untitled clip 3 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQMO55Evk0_M9B5bpL3RRZ8NGA4MMdz92nGEQEtXG_LOgMl8l0ht3Y5FHvJdFWX5lvMLCiQ3NQtU06-h8w--dta572L3J6W0_0-X474.mp4", "notes": "Auto-added from your videos/Core Rotation folder — open it, then fill in the real name, duration and cue.", "order": 2}, {"id": "seed-10", "category": "core-rotation", "title": "Untitled clip 4 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQMQ8o_9n73XzPpu-DH8rnAa4zYJUIypdFEHQdDd_I9jAoiaVKI8J2hozysiemENDe93KmTJgtOxY1qlB9tJ6lM5wtce5EMuwLh7EWM.mp4", "notes": "Auto-added from your videos/Core Rotation folder — open it, then fill in the real name, duration and cue.", "order": 3}, {"id": "seed-11", "category": "core-rotation", "title": "Untitled clip 5 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQNRW_d85SPsckbTuZJHcNT0IfVVt_g6FD07SbizMT18FKWp7gaBUPVwkQJu4J3QFuBihPiBfFHKE7kSeNbNFKHkGwKojknTXlWSTA4.mp4", "notes": "Auto-added from your videos/Core Rotation folder — open it, then fill in the real name, duration and cue.", "order": 4}, {"id": "seed-12", "category": "core-rotation", "title": "Untitled clip 6 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQNf9p8Hsvo0qYgxeaCxZXE6nKim8tnUTYD3CcUL8FdGi1tSzo047Npux6Dr9UiSIHQaJiY5fjBvccIAqiOqXurn1PXulT6OpDkxmps.mp4", "notes": "Auto-added from your videos/Core Rotation folder — open it, then fill in the real name, duration and cue.", "order": 5}, {"id": "seed-13", "category": "core-rotation", "title": "Untitled clip 7 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQNjO-acHz3S2KOL3ycdpiNGfGcPpXnwSdnIeOVhq_S773wYq3KxQmJv0i5aIYtIVpSmdKLmBjeFn94mOHM5JeK1wZVipxXRmPK0Ix4.mp4", "notes": "Auto-added from your videos/Core Rotation folder — open it, then fill in the real name, duration and cue.", "order": 6}, {"id": "seed-14", "category": "core-rotation", "title": "Untitled clip 8 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQNn7BNQDZaHRx5kBDrsNce_TD-PtAl2DJQiOehctwVOm405sY3ojSfoQdfJ35Vjl76L6Df-WKoBLLMG0eZUJzg37BYcYRtEOli3xoc.mp4", "notes": "Auto-added from your videos/Core Rotation folder — open it, then fill in the real name, duration and cue.", "order": 7}, {"id": "seed-15", "category": "core-rotation", "title": "Untitled clip 9 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQNrTYlX4gyMA_Arbf90Zm8973mkgTec7WlcC3H1zz0aVaLLWMU_PTS-rpFJ9zmOfQ4E3QQgUfUGtbRahqlpJFg2F8k63S8oGR5gJLY.mp4", "notes": "Auto-added from your videos/Core Rotation folder — open it, then fill in the real name, duration and cue.", "order": 8}, {"id": "seed-16", "category": "core-rotation", "title": "Untitled clip 10 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQO0BEZfMV2YP_OMoK4q4AudS75LXZ2ieDF-qKV6nb8tyg2je2PVllpa5TcD3tEaa2rdjSoSPDt99eI0sTW4rUY7x6XoaYVJzL2wo7Q.mp4", "notes": "Auto-added from your videos/Core Rotation folder — open it, then fill in the real name, duration and cue.", "order": 9}, {"id": "seed-17", "category": "core-rotation", "title": "Untitled clip 11 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOHvJWJrmHYx4NVQcLcJIzTgPBVwST_3G910k8BxE96Sh1dwBexQsQrj_YHELmluxcFk1qjnGmLugnjU6RmBYsNchhdbfUkoUpcz7A.mp4", "notes": "Auto-added from your videos/Core Rotation folder — open it, then fill in the real name, duration and cue.", "order": 10}, {"id": "seed-18", "category": "core-rotation", "title": "Untitled clip 12 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOJ9znt7CgjJI3JYCAHy6ctY0pwZIH0LIaGQtlRehusZJNWckE6HCOLuuWnzX9DVgnxhws1HXmNT7jhG1qRxl-DSw7OEiqEQTtKmJw.mp4", "notes": "Auto-added from your videos/Core Rotation folder — open it, then fill in the real name, duration and cue.", "order": 11}, {"id": "seed-19", "category": "core-rotation", "title": "Untitled clip 13 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOX2EsYXTeK2Oo3lWUBdhJcXKO_jV98gUR5t0f4uiAnH-bMO52we5IoYdTmvxqRBaFNZdL0e-DKP9o9mufMf-czIInho_Tf-WBsAxg.mp4", "notes": "Auto-added from your videos/Core Rotation folder — open it, then fill in the real name, duration and cue.", "order": 12}, {"id": "seed-20", "category": "core-rotation", "title": "Untitled clip 14 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOa-7dH8gAapwBcSu3MwRS4Y9SqgstosCgI5Gj-DvqZjmVhmqQ_SVv0jd4vI86pOhlEDuE8rctYa6fWYMW_1GFS4BIvliwT_ELjql8.mp4", "notes": "Auto-added from your videos/Core Rotation folder — open it, then fill in the real name, duration and cue.", "order": 13}, {"id": "seed-21", "category": "core-rotation", "title": "Untitled clip 15 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOee3doZkjWgXwFNcjF-iejCCs9BON4srwL8zWkxNtYb5R89xy9RdlNLjhBckkv5mld680rJvuc3EQFBpFTxAfprup3PB5juqV9OjU.mp4", "notes": "Auto-added from your videos/Core Rotation folder — open it, then fill in the real name, duration and cue.", "order": 14}, {"id": "seed-22", "category": "core-rotation", "title": "Untitled clip 16 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOjr5CfchhxIl2YvhSsWlHmJTfsIU7Hse02zRLP3aAO-iYzZmrp4-vOS4humd7rvEUzuoOkSZfvjPAft_48458h4AC7wK2z2sHACik.mp4", "notes": "Auto-added from your videos/Core Rotation folder — open it, then fill in the real name, duration and cue.", "order": 15}, {"id": "seed-23", "category": "core-rotation", "title": "Untitled clip 17 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOo5GEpL0Va0oB3uPBi10CldL2oTkSsS9KcLWrRbR_owQ0UbJMMmXBeKb7j3FQn2t4i8gVV_bDBCyuM5L9SyuBle0FyiNtA0nAHZNA.mp4", "notes": "Auto-added from your videos/Core Rotation folder — open it, then fill in the real name, duration and cue.", "order": 16}, {"id": "seed-24", "category": "core-rotation", "title": "Untitled clip 18 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOpq_fPwA-UVOJ8LP9Qsc-v3Yv_II3SIigEGLqU3zumNR5omma0FVKffKdVHSjWsfFqZyTNlM0QJ5mnySp2p7RoRAl8YmtyzhwbV_8.mp4", "notes": "Auto-added from your videos/Core Rotation folder — open it, then fill in the real name, duration and cue.", "order": 17}, {"id": "seed-25", "category": "core-rotation", "title": "Untitled clip 19 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQPCHxPd0HHEodupRLcESewHs0rrLWp1YQ3kEQQ2f6m3xHztMt_WCkoyVG62b1Ln7ZuULZObrny00YRCTzt6LIX6CxvoAUyRymT6318.mp4", "notes": "Auto-added from your videos/Core Rotation folder — open it, then fill in the real name, duration and cue.", "order": 18}, {"id": "seed-26", "category": "core-rotation", "title": "Untitled clip 20 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQPbMiM4VXRIcUX20RAnkoKh6ekV6a3CYb1yus9kCyaTH8kcZVrNVk-s6Qx6J-bQnLZmWgCZDyXJ0atUohjckTuTcpXD1Gd17N40ZnM.mp4", "notes": "Auto-added from your videos/Core Rotation folder — open it, then fill in the real name, duration and cue.", "order": 19}, {"id": "seed-27", "category": "core-rotation", "title": "Untitled clip 21 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQPvUXjfWDNLhQE5wILpAZF-A26icM0MhkAP6QCS5cihPrlYuElTUorVCn8rMrpuPRRyl0mDil54fznj6DetDcQfqD51ZfV46lWr1Y8.mp4", "notes": "Auto-added from your videos/Core Rotation folder — open it, then fill in the real name, duration and cue.", "order": 20}, {"id": "seed-28", "category": "glutes", "title": "Untitled clip 1 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQMLCmBJYPQryA-HZ9qYPfxM59k8Utq6AgB5DJlykZfT3saUpVaFeD9yhjlKPnYxgDwJBUtPILDgQJgbz_JfIPu-UQQLec5MuvwHRBk.mp4", "notes": "Auto-added from your videos/Glutes folder — open it, then fill in the real name, duration and cue.", "order": 0}, {"id": "seed-29", "category": "glutes", "title": "Untitled clip 2 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQMjso1a2v7mVqJtki1OqPZ-iom1CEWm_hDtusf0AAcrAZLGn6yTdF0izBcxfptwyQH-k4ofkCBOd_YX148ethgnVkMOXCF_Gu-e1qA.mp4", "notes": "Auto-added from your videos/Glutes folder — open it, then fill in the real name, duration and cue.", "order": 1}, {"id": "seed-30", "category": "glutes", "title": "Untitled clip 3 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQMpbL8pnHlPKEqkO-TcTDariMI5Xh2j1HoRLu_NeMxJouCBYOg8gknHGqqCjGgVmrfBPDCW3XsNh2m4pYnbDwu3ol04BGoNn7k5HoE.mp4", "notes": "Auto-added from your videos/Glutes folder — open it, then fill in the real name, duration and cue.", "order": 2}, {"id": "seed-31", "category": "glutes", "title": "Untitled clip 4 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQMtN5ZW0wW_ittRl0EDU9UyzD2eWswmT4FyxjVpNeaFejMuA0cgDLKLerR3lqbc2_EI-Sn7rxQjZAlhVItIby2KrItZbr22tQQLm9E.mp4", "notes": "Auto-added from your videos/Glutes folder — open it, then fill in the real name, duration and cue.", "order": 3}, {"id": "seed-32", "category": "glutes", "title": "Untitled clip 5 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQMvqdhKzPbxebVLewXDZR1qwxrJtbhG0KW7CO1QHL0cvMF0XM2k55_O0ZuL2JWOD1RrfNtfq9CQEB2zoyh4qCkFPFFOgIp5r7yYxas.mp4", "notes": "Auto-added from your videos/Glutes folder — open it, then fill in the real name, duration and cue.", "order": 4}, {"id": "seed-33", "category": "glutes", "title": "Untitled clip 6 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQND9yBwgyp0lZzW5iUGRUDRLLYPQYWWG5Q19EojmADunlHg2B7YaXwhk3zjkt-wGNqIBmpLRzouYZwLfECi2-DZSTuNHxu76JJ0pXY.mp4", "notes": "Auto-added from your videos/Glutes folder — open it, then fill in the real name, duration and cue.", "order": 5}, {"id": "seed-34", "category": "glutes", "title": "Untitled clip 7 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQNGIAyxNssnWUTtK0iKnZ4ngQoofYieIWY59qrS1PrfBXBVRX52T96ymWdmiH9vW1-2E2jGV_NR1GMdOqnjc52Ty-JYCGvBcmNqKAQ.mp4", "notes": "Auto-added from your videos/Glutes folder — open it, then fill in the real name, duration and cue.", "order": 6}, {"id": "seed-35", "category": "glutes", "title": "Untitled clip 8 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOa-7dH8gAapwBcSu3MwRS4Y9SqgstosCgI5Gj-DvqZjmVhmqQ_SVv0jd4vI86pOhlEDuE8rctYa6fWYMW_1GFS4BIvliwT_ELjql8.mp4", "notes": "Auto-added from your videos/Glutes folder — open it, then fill in the real name, duration and cue.", "order": 7}, {"id": "seed-36", "category": "glutes", "title": "Untitled clip 9 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQObJkf_9fLuep1yssoY_KzkDzoAdMOOem_4ymVHrO_j4-d_UBfF2DsH7m-z2wO3z5xWuC5VF53wegIu8mB6rESB.mp4", "notes": "Auto-added from your videos/Glutes folder — open it, then fill in the real name, duration and cue.", "order": 8}, {"id": "seed-37", "category": "glutes", "title": "Untitled clip 10 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOp9DiKOFLzdxmH7_LOg69sB5oP0qMLn051y7SgJGajSCJJPOvTZVoTueVKY0epC7Ok24p9iwR1KUkOt3byYk_BFLds5CH9ke4TjYq1IPnIMg.mp4", "notes": "Auto-added from your videos/Glutes folder — open it, then fill in the real name, duration and cue.", "order": 9}, {"id": "seed-38", "category": "glutes", "title": "Untitled clip 11 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOpq_fPwA-UVOJ8LP9Qsc-v3Yv_II3SIigEGLqU3zumNR5omma0FVKffKdVHSjWsfFqZyTNlM0QJ5mnySp2p7RoRAl8YmtyzhwbV_8.mp4", "notes": "Auto-added from your videos/Glutes folder — open it, then fill in the real name, duration and cue.", "order": 10}, {"id": "seed-39", "category": "glutes", "title": "Untitled clip 12 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOuZg_PH_QtiGQD0fmE6o-RlO7N1TM-wRkJQ-LRMzluQdwBf6kwMqk2IUmwzhdzskNfM6jYCI9MeW8gjNjqqrCanZGgUb99g2gCbAc3FpB29w.mp4", "notes": "Auto-added from your videos/Glutes folder — open it, then fill in the real name, duration and cue.", "order": 11}, {"id": "seed-40", "category": "glutes", "title": "Untitled clip 13 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQPwHQXox1909FQCsDd1rWL5vskUxmF6BvhPfpzPg6LGvV3--y2TCYMHv1dRfYbFy7aFPVQO2Co1yClfEWHQNfj7h7rn6NGhmw0hbeI.mp4", "notes": "Auto-added from your videos/Glutes folder — open it, then fill in the real name, duration and cue.", "order": 12}, {"id": "seed-41", "category": "hamstrings", "title": "Untitled clip 1 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQM4y0ZYHVIuziG_KtFgrw5xFyV8ulfhT68a4UODYNW8DeMXn1oRCMPOxg4z2-5KmxOWaeVrs1VcSr6T85eMpea5vHOe8-0RzWfV_Nc.mp4", "notes": "Auto-added from your videos/Hamstrings folder — open it, then fill in the real name, duration and cue.", "order": 0}, {"id": "seed-42", "category": "hamstrings", "title": "Untitled clip 2 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQMeCVjzIlSguAkim3Hjbk3krRF9AlN9V8B5PQUdwKD0O_mkmKDLLijlSOwq2FpU7P4cbkS9TilB-PASE-bMTuhEXnqPyJoH3jxjiE0.mp4", "notes": "Auto-added from your videos/Hamstrings folder — open it, then fill in the real name, duration and cue.", "order": 1}, {"id": "seed-43", "category": "hamstrings", "title": "Untitled clip 3 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQPTEo1aKlMOOvc5mOR2d8-r8IB6fBD3XR8gsowPz9PP-G1rPCwsONzzQmAnyhLoIBPqNvkQarfVinyrZ-CNOiaM94l6Sg2C8Umdfz4.mp4", "notes": "Auto-added from your videos/Hamstrings folder — open it, then fill in the real name, duration and cue.", "order": 2}, {"id": "seed-44", "category": "hip-mobility", "title": "Untitled clip 1 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQMGMr4-U8vdb_steWFRPypO3-pDK3kOhjiGp_CFfCaUgiVAfDcY76GIBdKN045ca8vonRus0IyKHQGeQsTvyy5-5XvjMpQkqWdl-Ac.mp4", "notes": "Auto-added from your videos/Hip mobility folder — open it, then fill in the real name, duration and cue.", "order": 0}, {"id": "seed-45", "category": "hip-mobility", "title": "Untitled clip 2 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQMm_8YsCkQBYVkG53-5mFs4lqJ9V9Tu1PShTZQpozu7laPxDmV-LLyfS_HP2TAYdSgigtg7AaIV-PWB3wN6IecTR-mztjuVvR1LwPU.mp4", "notes": "Auto-added from your videos/Hip mobility folder — open it, then fill in the real name, duration and cue.", "order": 1}, {"id": "seed-46", "category": "hip-mobility", "title": "Untitled clip 3 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQMpbL8pnHlPKEqkO-TcTDariMI5Xh2j1HoRLu_NeMxJouCBYOg8gknHGqqCjGgVmrfBPDCW3XsNh2m4pYnbDwu3ol04BGoNn7k5HoE.mp4", "notes": "Auto-added from your videos/Hip mobility folder — open it, then fill in the real name, duration and cue.", "order": 2}, {"id": "seed-47", "category": "hip-mobility", "title": "Untitled clip 4 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQNQuPfiz5zBHds7RGCh5KOnepJoZNsmSrznndd7mvhaLvBCTn6SBpR9tilUN5y5EwvZOmUjKPtF-smWVLo27U6f2kVTPIHPZYNCMhg.mp4", "notes": "Auto-added from your videos/Hip mobility folder — open it, then fill in the real name, duration and cue.", "order": 3}, {"id": "seed-48", "category": "hip-mobility", "title": "Untitled clip 5 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOeqnOS8kzNIr9uCXrDKhYI-P54Ys31XruGge0sKpjHQow8yxSWn_UbhdtxnUH1K59J4MwnHsIcnTSYPS_Lznmu1u8mlkzMt42SE0A.mp4", "notes": "Auto-added from your videos/Hip mobility folder — open it, then fill in the real name, duration and cue.", "order": 4}, {"id": "seed-49", "category": "hip-mobility", "title": "Untitled clip 6 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOmx86bp60hpVaSDlAg0nlVC52mm8yVXpcW3wT_t5fvLGPz9jcTQsE3qIxStJXs9vJr7UQeJLhqqSMUvOZrvDXw8Gzbm56u5Y3IHY8 (1).mp4", "notes": "Auto-added from your videos/Hip mobility folder — open it, then fill in the real name, duration and cue.", "order": 5}, {"id": "seed-50", "category": "hip-mobility", "title": "Untitled clip 7 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQP7HvZtr45hY27OjIi_MfkI-5ww87Ln4caVj8vA4jYqyHAjmhnS995InfERWmWt_-ydnSQmXjlhTnZm9ykIgpDzd2ZPkuKm5My-bxk.mp4", "notes": "Auto-added from your videos/Hip mobility folder — open it, then fill in the real name, duration and cue.", "order": 6}, {"id": "seed-51", "category": "hip-mobility", "title": "Untitled clip 8 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQPMuzrk6jsif33aEUigKJQ61zDMa1u_SKved8SyIMf-Wuy_5vxFNxP8J3bXyjylg2E5KkywQbpkP8frlTLnuMYeNghCvsDOI5vd_yc.mp4", "notes": "Auto-added from your videos/Hip mobility folder — open it, then fill in the real name, duration and cue.", "order": 7}, {"id": "seed-52", "category": "hip-mobility", "title": "Untitled clip 9 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQPqNleslNco5nckgyuOE-bhHl42JapWeEvw3eA2FmBUBuabElNZcj1_dkDFI6YOAaKfKZyxeGovFsjhHl8ebMfc8Hcl26qPX7Kx3fk.mp4", "notes": "Auto-added from your videos/Hip mobility folder — open it, then fill in the real name, duration and cue.", "order": 8}, {"id": "seed-53", "category": "isometric-stability", "title": "Untitled clip 1 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQM5x2Bj1UDm39B4mBxYy9gdosXQ1qWxJO8YWKsN8muIQCBMXsnAIT-XxOfikUA2N4HMbsfKoQGZI-smRPF_sr-2JER3rf-ZgFGei_o.mp4", "notes": "Auto-added from your videos/ISometric Stability folder — open it, then fill in the real name, duration and cue.", "order": 0}, {"id": "seed-54", "category": "isometric-stability", "title": "Untitled clip 2 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQMeCVjzIlSguAkim3Hjbk3krRF9AlN9V8B5PQUdwKD0O_mkmKDLLijlSOwq2FpU7P4cbkS9TilB-PASE-bMTuhEXnqPyJoH3jxjiE0.mp4", "notes": "Auto-added from your videos/ISometric Stability folder — open it, then fill in the real name, duration and cue.", "order": 1}, {"id": "seed-55", "category": "isometric-stability", "title": "Untitled clip 3 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQMtN5ZW0wW_ittRl0EDU9UyzD2eWswmT4FyxjVpNeaFejMuA0cgDLKLerR3lqbc2_EI-Sn7rxQjZAlhVItIby2KrItZbr22tQQLm9E.mp4", "notes": "Auto-added from your videos/ISometric Stability folder — open it, then fill in the real name, duration and cue.", "order": 2}, {"id": "seed-56", "category": "isometric-stability", "title": "Untitled clip 4 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQMvqdhKzPbxebVLewXDZR1qwxrJtbhG0KW7CO1QHL0cvMF0XM2k55_O0ZuL2JWOD1RrfNtfq9CQEB2zoyh4qCkFPFFOgIp5r7yYxas.mp4", "notes": "Auto-added from your videos/ISometric Stability folder — open it, then fill in the real name, duration and cue.", "order": 3}, {"id": "seed-57", "category": "isometric-stability", "title": "Untitled clip 5 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQNQuPfiz5zBHds7RGCh5KOnepJoZNsmSrznndd7mvhaLvBCTn6SBpR9tilUN5y5EwvZOmUjKPtF-smWVLo27U6f2kVTPIHPZYNCMhg.mp4", "notes": "Auto-added from your videos/ISometric Stability folder — open it, then fill in the real name, duration and cue.", "order": 4}, {"id": "seed-58", "category": "isometric-stability", "title": "Untitled clip 6 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQNajICLH1sulMv7liktDINSLPL-j4pPIeT-tDEgFtsDBF3e-iqxSQxbpbe9emWvWl5osMFQW5RZhMP6rL9KzOnZeuz1YHcKmTsG1Vw.mp4", "notes": "Auto-added from your videos/ISometric Stability folder — open it, then fill in the real name, duration and cue.", "order": 5}, {"id": "seed-59", "category": "isometric-stability", "title": "Untitled clip 7 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOE12N5B8ByRSE58N6IJz5ZM0bPTYDZ25QU5QTT17WBKP51n2cbfuIyjA1-vmjvY5YK1CDvfazmunRVdnKVGxIsaa8eur75p7XvkO4.mp4", "notes": "Auto-added from your videos/ISometric Stability folder — open it, then fill in the real name, duration and cue.", "order": 6}, {"id": "seed-60", "category": "isometric-stability", "title": "Untitled clip 8 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOElyutamI8s9D13MRztzKmTLOHj-k3Kb8Sdg1MslUsdXi6fEATwPWN21WghRgLnQ6s0Z8CGQhu8N8ftt_0o-PqtmGJO8e_Buhj1G4.mp4", "notes": "Auto-added from your videos/ISometric Stability folder — open it, then fill in the real name, duration and cue.", "order": 7}, {"id": "seed-61", "category": "isometric-stability", "title": "Untitled clip 9 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOIskdaxYGPolng_TXOXnMOvnXkIRr4uzgQ9cnh4cn3z7mqLbjcHVbQhdBT9twuAJ5xtRt82aE-EE3VruRaPCIpgHcTfHBSCqUnke8.mp4", "notes": "Auto-added from your videos/ISometric Stability folder — open it, then fill in the real name, duration and cue.", "order": 8}, {"id": "seed-62", "category": "leg-strength", "title": "Untitled clip 1 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQM3Jm9ViJelvTU-YsC1PNd_uOv_V4XNXLI8nuzxoZ39evElcDPlSzPL5eKabjP8e4tUt1_iY-mb_AlrICPtGTbFUjtbiOdRL9DtH_8.mp4", "notes": "Auto-added from your videos/Leg strength folder — open it, then fill in the real name, duration and cue.", "order": 0}, {"id": "seed-63", "category": "leg-strength", "title": "Untitled clip 2 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQMLCmBJYPQryA-HZ9qYPfxM59k8Utq6AgB5DJlykZfT3saUpVaFeD9yhjlKPnYxgDwJBUtPILDgQJgbz_JfIPu-UQQLec5MuvwHRBk.mp4", "notes": "Auto-added from your videos/Leg strength folder — open it, then fill in the real name, duration and cue.", "order": 1}, {"id": "seed-64", "category": "leg-strength", "title": "Untitled clip 3 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQMeCVjzIlSguAkim3Hjbk3krRF9AlN9V8B5PQUdwKD0O_mkmKDLLijlSOwq2FpU7P4cbkS9TilB-PASE-bMTuhEXnqPyJoH3jxjiE0.mp4", "notes": "Auto-added from your videos/Leg strength folder — open it, then fill in the real name, duration and cue.", "order": 2}, {"id": "seed-65", "category": "leg-strength", "title": "Untitled clip 4 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQMjso1a2v7mVqJtki1OqPZ-iom1CEWm_hDtusf0AAcrAZLGn6yTdF0izBcxfptwyQH-k4ofkCBOd_YX148ethgnVkMOXCF_Gu-e1qA.mp4", "notes": "Auto-added from your videos/Leg strength folder — open it, then fill in the real name, duration and cue.", "order": 3}, {"id": "seed-66", "category": "leg-strength", "title": "Untitled clip 5 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQMsDP9N7H1Td9uGfuJlIB_9TtZJd4ZrMqhIadCnG9p4yPG1Du3Vs1JJMNXBYMYSdeO3dE2aPwFNrfKpkVBAy4cHWPqU_DXDkw08Ioo.mp4", "notes": "Auto-added from your videos/Leg strength folder — open it, then fill in the real name, duration and cue.", "order": 4}, {"id": "seed-67", "category": "leg-strength", "title": "Untitled clip 6 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQObJkf_9fLuep1yssoY_KzkDzoAdMOOem_4ymVHrO_j4-d_UBfF2DsH7m-z2wO3z5xWuC5VF53wegIu8mB6rESB.mp4", "notes": "Auto-added from your videos/Leg strength folder — open it, then fill in the real name, duration and cue.", "order": 5}, {"id": "seed-68", "category": "misc", "title": "Untitled clip 1 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQNFTn-ECCkRui-vTq_1veW3obVslb7WDF7m0seGLOpZBzUnHvqzxKwn9sTc5sLSApxLtRLYsmHm8FPYuoBtrQ6844sochP2Fz4AgZ0.mp4", "notes": "Auto-added from your videos/Misc folder — open it, then fill in the real name, duration and cue.", "order": 0}, {"id": "seed-69", "category": "plyometrics", "title": "Untitled clip 1 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQM4y0ZYHVIuziG_KtFgrw5xFyV8ulfhT68a4UODYNW8DeMXn1oRCMPOxg4z2-5KmxOWaeVrs1VcSr6T85eMpea5vHOe8-0RzWfV_Nc.mp4", "notes": "Auto-added from your videos/Plyometrics folder — open it, then fill in the real name, duration and cue.", "order": 0}, {"id": "seed-70", "category": "plyometrics", "title": "Untitled clip 2 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQM5x2Bj1UDm39B4mBxYy9gdosXQ1qWxJO8YWKsN8muIQCBMXsnAIT-XxOfikUA2N4HMbsfKoQGZI-smRPF_sr-2JER3rf-ZgFGei_o.mp4", "notes": "Auto-added from your videos/Plyometrics folder — open it, then fill in the real name, duration and cue.", "order": 1}, {"id": "seed-71", "category": "plyometrics", "title": "Untitled clip 3 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQMV-sgaDwxMSnnnbfaa8r63BrYl1oZivqxbHR0n9VU8suCEEsoPBiSQUEx-i04CRTZ1GN5rX2TLc4-EPNIlHI_uFNaI9zaOtb-0cL0.mp4", "notes": "Auto-added from your videos/Plyometrics folder — open it, then fill in the real name, duration and cue.", "order": 2}, {"id": "seed-72", "category": "plyometrics", "title": "Untitled clip 4 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQMtN5ZW0wW_ittRl0EDU9UyzD2eWswmT4FyxjVpNeaFejMuA0cgDLKLerR3lqbc2_EI-Sn7rxQjZAlhVItIby2KrItZbr22tQQLm9E.mp4", "notes": "Auto-added from your videos/Plyometrics folder — open it, then fill in the real name, duration and cue.", "order": 3}, {"id": "seed-73", "category": "plyometrics", "title": "Untitled clip 5 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQNJ_nGr_FmOmz3mG1AWqBLpdzKzTpcigZMq1I53Csf4H8tAS-QdWJiyxJ08sZpr9CWoJoFb75umbwsaKdWGXBl5J0TlYjjpH2Bhnfw.mp4", "notes": "Auto-added from your videos/Plyometrics folder — open it, then fill in the real name, duration and cue.", "order": 4}, {"id": "seed-74", "category": "plyometrics", "title": "Untitled clip 6 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOE12N5B8ByRSE58N6IJz5ZM0bPTYDZ25QU5QTT17WBKP51n2cbfuIyjA1-vmjvY5YK1CDvfazmunRVdnKVGxIsaa8eur75p7XvkO4.mp4", "notes": "Auto-added from your videos/Plyometrics folder — open it, then fill in the real name, duration and cue.", "order": 5}, {"id": "seed-75", "category": "plyometrics", "title": "Untitled clip 7 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOElyutamI8s9D13MRztzKmTLOHj-k3Kb8Sdg1MslUsdXi6fEATwPWN21WghRgLnQ6s0Z8CGQhu8N8ftt_0o-PqtmGJO8e_Buhj1G4.mp4", "notes": "Auto-added from your videos/Plyometrics folder — open it, then fill in the real name, duration and cue.", "order": 6}, {"id": "seed-76", "category": "plyometrics", "title": "Untitled clip 8 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOa5wc75xw7fzUG3gfugAfNcnmLTTq_MXm2H-3RdJNUsLGiy8Pd97pqEtHykn5ic-hdN1p_E6LC8vrFk-hbnbFfh7q19_C2Brh6bd4.mp4", "notes": "Auto-added from your videos/Plyometrics folder — open it, then fill in the real name, duration and cue.", "order": 7}, {"id": "seed-77", "category": "plyometrics", "title": "Untitled clip 9 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOv4roKBVBPU-PUJx6Gxl2ATafL30HCH8sw_7x1prJgGKtxMOe2nG84uQ_O4hn7gMwwxjCE2FN-hDA54iEJIw-u9v9CAlksiuJC_ss.mp4", "notes": "Auto-added from your videos/Plyometrics folder — open it, then fill in the real name, duration and cue.", "order": 8}, {"id": "seed-78", "category": "plyometrics", "title": "Untitled clip 10 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQP1-MtAWqAzrD-jEk0sPMq3eu5qd5OjjGWRtIMJwuI0QOqYad93EFW05hJTwADpCODgZKggVvztPr7451OUumAswJk1KR--tTowVAw.mp4", "notes": "Auto-added from your videos/Plyometrics folder — open it, then fill in the real name, duration and cue.", "order": 9}, {"id": "seed-79", "category": "shoulders", "title": "Untitled clip 1 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQN6GdaZlloEsATZAMm5Xur9nz9K1qLhhbchXIQ48M-cBJmTPx6fPd9kHK-mmT17gk7IbiIn-k-PzWs88tTS6LdSFoErkNvOibdwKqM.mp4", "notes": "Auto-added from your videos/Shoulders folder — open it, then fill in the real name, duration and cue.", "order": 0}, {"id": "seed-80", "category": "shoulders", "title": "Untitled clip 2 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQPxCJ8aO7qCUR6tCxSeSqlLMERx5EIjY8z1Bo2alQ258Rc8m7NSMCE-DrkY1_6vt8h8NREaMfHMj16tZW6db18305Tzask7tttK3Xc.mp4", "notes": "Auto-added from your videos/Shoulders folder — open it, then fill in the real name, duration and cue.", "order": 1}, {"id": "seed-81", "category": "warm-up-strech", "title": "Untitled clip 1 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQMVFQu9eiW1qQx90hz_UmV1cCROgYP2Lm5KFkyS_K4pisuIHvYJHLwpXhm5yyQOrB7Hw7xHj_sTfL4Mn9s4uhb-ijLMGc9Ufx3hB9o.mp4", "notes": "Auto-added from your videos/Warm-up- Strech folder — open it, then fill in the real name, duration and cue.", "order": 0}, {"id": "seed-82", "category": "warm-up-strech", "title": "Untitled clip 2 (rename me)", "duration": "", "equipment": "", "link": "", "videoFile": "SnapInsta.to_AQOa-7dH8gAapwBcSu3MwRS4Y9SqgstosCgI5Gj-DvqZjmVhmqQ_SVv0jd4vI86pOhlEDuE8rctYa6fWYMW_1GFS4BIvliwT_ELjql8.mp4", "notes": "Auto-added from your videos/Warm-up- Strech folder — open it, then fill in the real name, duration and cue.", "order": 1}];
+
+  var state = { categories:[], exercises:[], routines:[], route:{view:"home"} };
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return (s||"").replace(/[&<>"']/g, function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+  function toast(msg){
+    var t=$("toast"); t.textContent=msg; t.classList.add("show");
+    clearTimeout(toast._h); toast._h=setTimeout(function(){t.classList.remove("show");},1800);
+  }
+
+  // ---------- local persistence (this browser only) ----------
+  var storageOk = true;
+  function load(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        var parsed = JSON.parse(raw);
+        state.categories = parsed.categories || [];
+        state.exercises = parsed.exercises || [];
+        state.routines = parsed.routines || [];
+        return;
+      }
+    }catch(e){ storageOk = false; }
+    // first run (or storage unavailable) — seed defaults
+    state.categories = DEFAULT_CATEGORIES.slice();
+    state.exercises = SEED_EXERCISES.slice();
+    state.routines = [];
+    save();
+  }
+  function save(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        categories: state.categories, exercises: state.exercises, routines: state.routines
+      }));
+    }catch(e){
+      storageOk = false;
+      toast("Couldn't save to this browser's storage — use Backup to export your data");
+    }
+  }
+
+  function catById(id){ return state.categories.find(function(c){return c.id===id;}); }
+  function exById(id){ return state.exercises.find(function(e){return e.id===id;}); }
+  function exercisesFor(catId){
+    return state.exercises.filter(function(e){return e.category===catId;})
+      .sort(function(a,b){return (a.order||0)-(b.order||0);});
+  }
+  // Each category owns one folder under videos/ — the video path is built
+  // from the category's folder plus the exercise's file name, never typed
+  // in full by hand.
+  function videoPath(cat, filename){
+    if(!cat || !filename) return null;
+    return "videos/" + encodeURIComponent(cat.folder) + "/" + encodeURIComponent(filename);
+  }
+
+  // ---------- offline video caching (Cache Storage, shared with the service worker) ----------
+  function allVideoUrls(){
+    var urls = [], seen = {};
+    state.exercises.forEach(function(e){
+      if(!e.videoFile) return;
+      var p = videoPath(catById(e.category), e.videoFile);
+      if(p && !seen[p]){ seen[p] = true; urls.push(p); }
+    });
+    return urls;
+  }
+  function downloadAllVideosOffline(){
+    if(!("caches" in window)){ toast("This browser can't store videos for offline use"); return; }
+    var urls = allVideoUrls();
+    if(urls.length===0){ toast("No local videos to download yet"); return; }
+    var btn = $("offlineDownloadBtn");
+    if(btn){ btn.disabled = true; btn.textContent = "Downloading…"; }
+    caches.open(VIDEO_CACHE_NAME).then(function(cache){
+      var done = 0, failed = 0;
+      function next(i){
+        if(i >= urls.length){
+          if(btn){ btn.disabled = false; btn.textContent = "⬇ Download for offline"; }
+          toast("Offline ready — "+done+"/"+urls.length+" videos cached"+(failed?(", "+failed+" failed"):""));
+          return;
+        }
+        cache.match(urls[i]).then(function(hit){
+          if(hit){ done++; if(btn) btn.textContent = "Downloading… "+(i+1)+"/"+urls.length; next(i+1); return; }
+          fetch(urls[i]).then(function(res){
+            if(!res.ok) throw new Error("bad response");
+            return cache.put(urls[i], res);
+          }).then(function(){
+            done++;
+            if(btn) btn.textContent = "Downloading… "+(i+1)+"/"+urls.length;
+            next(i+1);
+          }).catch(function(){ failed++; next(i+1); });
+        });
+      }
+      next(0);
+    });
+  }
+  function clearOfflineVideos(){
+    if(!("caches" in window)) return;
+    if(!confirm("Remove all downloaded videos from this device? You can download them again anytime you have signal.")) return;
+    caches.delete(VIDEO_CACHE_NAME).then(function(){ toast("Offline videos cleared"); });
+  }
+
+  // ---------- routing ----------
+  function goHome(){ state.route = {view:"home"}; render(); }
+  function goCategory(id){ state.route = {view:"category", catId:id}; render(); }
+
+  // ---------- render ----------
+  function render(){
+    renderTopbar();
+    if(state.route.view==="category"){
+      $("view-home").classList.remove("active");
+      $("view-category").classList.add("active");
+      renderCategory();
+    } else {
+      $("view-category").classList.remove("active");
+      $("view-home").classList.add("active");
+      renderHome();
+    }
+  }
+
+  function renderTopbar(){
+    var crumbs = $("crumbs"), actions = $("topbarActions");
+    if(state.route.view==="category"){
+      var c = catById(state.route.catId);
+      crumbs.innerHTML = '<button id="crumbHome">Library</button><span>/</span><span>'+esc(c?c.name:"")+'</span>';
+      $("crumbHome").onclick = goHome;
+      actions.innerHTML = '<button class="btn primary" id="addExBtn">+ Exercise</button>';
+      $("addExBtn").onclick = function(){ openExModal(state.route.catId); };
+    } else {
+      crumbs.innerHTML = '<span>Stored locally in this browser</span>';
+      actions.innerHTML =
+        '<button class="btn" id="newRoutineBtn">+ Routine</button>'+
+        '<button class="btn" id="newCatBtn">+ Category</button>'+
+        (deferredInstallPrompt?'<button class="btn ghost" id="installBtn" title="Add Stretch Deck to your home screen">📲 Install app</button>':"")+
+        '<button class="btn ghost" id="offlineDownloadBtn" title="Cache every video on this device so they play with no signal at the gym">⬇ Download for offline</button>'+
+        '<button class="btn ghost" id="offlineClearBtn" title="Remove downloaded videos to free up space">Clear offline</button>'+
+        '<button class="btn ghost" id="backupBtn" title="Download your library as a JSON file">Backup</button>'+
+        '<button class="btn ghost" id="restoreBtn" title="Restore from a Backup file">Restore</button>';
+      $("newRoutineBtn").onclick = openRoutineModal;
+      $("newCatBtn").onclick = openCatModal;
+      if($("installBtn")) $("installBtn").onclick = function(){
+        var p = deferredInstallPrompt;
+        if(!p) return;
+        deferredInstallPrompt = null;
+        p.prompt();
+        p.userChoice.finally(renderTopbar);
+      };
+      $("offlineDownloadBtn").onclick = downloadAllVideosOffline;
+      $("offlineClearBtn").onclick = clearOfflineVideos;
+      $("backupBtn").onclick = doBackup;
+      $("restoreBtn").onclick = function(){ $("importInput").click(); };
+    }
+  }
+
+  function renderHome(){
+    var grid = $("catGrid");
+    grid.innerHTML = state.categories.map(function(c){
+      var n = exercisesFor(c.id).length;
+      return '<button class="cat-card" style="--band:'+esc(c.color)+'" data-cat="'+c.id+'">'+
+        '<div class="name">'+esc(c.name)+'</div>'+
+        '<div class="count"><b>'+n+'</b> exercise'+(n===1?"":"s")+'</div>'+
+      '</button>';
+    }).join("") + '<button class="cat-card-new" id="catGridNew">+ New category</button>';
+    grid.querySelectorAll("[data-cat]").forEach(function(btn){
+      btn.onclick = function(){ goCategory(btn.getAttribute("data-cat")); };
+    });
+    $("catGridNew").onclick = openCatModal;
+
+    var rl = $("routineList");
+    if(state.routines.length===0){
+      rl.innerHTML = '<div class="empty">No routines yet. Build one from your exercise library — a fixed order you press play through, timer included.</div>';
+    } else {
+      rl.innerHTML = state.routines.map(function(r){
+        var n=(r.exerciseIds||[]).length;
+        return '<div class="routine-card">'+
+          '<div><div class="name">'+esc(r.name)+'</div><div class="sub">'+n+' exercise'+(n===1?"":"s")+'</div></div>'+
+          '<div class="ex-rowbtns">'+
+            '<button class="btn primary small" data-play="'+r.id+'">▶ Start</button>'+
+            '<button class="icon-btn" data-delroutine="'+r.id+'" aria-label="Delete routine">🗑</button>'+
+          '</div>'+
+        '</div>';
+      }).join("");
+      rl.querySelectorAll("[data-play]").forEach(function(b){ b.onclick=function(){ startRoutine(b.getAttribute("data-play")); }; });
+      rl.querySelectorAll("[data-delroutine]").forEach(function(b){ b.onclick=function(){ deleteRoutine(b.getAttribute("data-delroutine")); }; });
+    }
+  }
+
+  function renderCategory(){
+    var c = catById(state.route.catId);
+    var list = exercisesFor(state.route.catId);
+    var el = $("exList");
+    if(!c){ goHome(); return; }
+    if(list.length===0){
+      el.innerHTML = '<div class="empty">Nothing here yet. Add one — a duration, a cue, and either a local video file or a reel link.</div>';
+      return;
+    }
+    el.innerHTML = list.map(function(e){
+      var metaBits=[];
+      if(e.duration) metaBits.push('<span>⏱ '+esc(e.duration)+'</span>');
+      if(e.equipment) metaBits.push('<span>🧰 '+esc(e.equipment)+'</span>');
+      var videoBlock = "";
+      if(e.videoFile){
+        videoBlock = '<video class="ex-video" controls playsinline preload="metadata" src="'+esc(videoPath(c, e.videoFile))+'" '+
+          'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\';"></video>'+
+          '<div class="ex-video-missing" style="display:none;">Couldn\'t find <code>videos/'+esc(c.folder)+'/'+esc(e.videoFile)+'</code> — check the file is still there and the name matches exactly.</div>';
+      }
+      return '<div class="ex-card" style="--band:'+esc(c.color)+'">'+
+        '<div class="ex-main">'+
+          '<div class="title">'+esc(e.title)+'</div>'+
+          (metaBits.length?'<div class="ex-meta">'+metaBits.join("")+'</div>':"")+
+          videoBlock+
+          (e.notes?'<div class="ex-notes">'+esc(e.notes)+'</div>':"")+
+        '</div>'+
+        '<div class="ex-actions">'+
+          (e.link?'<a class="btn small" href="'+esc(e.link)+'" target="_blank" rel="noopener">▶ Reel</a>':"")+
+          (e.videoFile?'<span class="tag">local video</span>':(e.link?"":'<span class="tag warn">nothing attached</span>'))+
+          '<div class="ex-rowbtns">'+
+            '<button class="btn small ghost" data-edit="'+e.id+'">Edit</button>'+
+            '<button class="icon-btn" data-del="'+e.id+'" aria-label="Delete exercise">🗑</button>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    }).join("");
+    el.querySelectorAll("[data-edit]").forEach(function(b){ b.onclick=function(){ openExModal(c.id, b.getAttribute("data-edit")); }; });
+    el.querySelectorAll("[data-del]").forEach(function(b){ b.onclick=function(){ deleteExercise(b.getAttribute("data-del")); }; });
+  }
+
+  // ---------- exercise modal ----------
+  var exEditingId = null;
+  function updateVideoFieldHint(){
+    var c = catById($("fCategory").value);
+    $("videoFieldFolder").textContent = c ? ("videos/"+c.folder+"/…") : "videos/…";
+  }
+  $("fCategory").addEventListener("change", updateVideoFieldHint);
+  function openExModal(catId, editId){
+    exEditingId = editId || null;
+    var sel = $("fCategory");
+    sel.innerHTML = state.categories.map(function(c){ return '<option value="'+c.id+'">'+esc(c.name)+'</option>'; }).join("");
+    if(editId){
+      var e = exById(editId);
+      $("exModalTitle").textContent = "Edit exercise";
+      $("fTitle").value = e.title||"";
+      sel.value = e.category||catId||"";
+      $("fDuration").value = e.duration||"";
+      $("fEquipment").value = e.equipment||"";
+      $("fLink").value = e.link||"";
+      $("fVideoFile").value = e.videoFile||"";
+      $("fNotes").value = e.notes||"";
+    } else {
+      $("exModalTitle").textContent = "Add exercise";
+      $("exForm").reset();
+      sel.value = catId || (state.categories[0]&&state.categories[0].id) || "";
+    }
+    updateVideoFieldHint();
+    $("exModalBackdrop").classList.add("open");
+    setTimeout(function(){ $("fTitle").focus(); }, 30);
+  }
+  function closeExModal(){ $("exModalBackdrop").classList.remove("open"); exEditingId=null; }
+  $("exCancel").onclick = closeExModal;
+  $("exModalBackdrop").addEventListener("click", function(ev){ if(ev.target===this) closeExModal(); });
+  $("videoBrowseBtn").onclick = function(){ $("videoBrowseInput").click(); };
+  $("videoBrowseInput").addEventListener("change", function(){
+    var f = this.files && this.files[0];
+    if(f) $("fVideoFile").value = f.name;
+    this.value = "";
+  });
+  $("exForm").addEventListener("submit", function(ev){
+    ev.preventDefault();
+    var data = {
+      title: $("fTitle").value.trim(),
+      category: $("fCategory").value,
+      duration: $("fDuration").value.trim(),
+      equipment: $("fEquipment").value.trim(),
+      link: $("fLink").value.trim(),
+      videoFile: $("fVideoFile").value.trim(),
+      notes: $("fNotes").value.trim()
+    };
+    if(!data.title) return;
+    if(exEditingId){
+      Object.assign(exById(exEditingId), data);
+    } else {
+      data.id = "ex-" + Date.now();
+      data.order = exercisesFor(data.category).length;
+      state.exercises.push(data);
+    }
+    save();
+    render();
+    toast("Saved");
+    closeExModal();
+  });
+  function deleteExercise(id){
+    if(!confirm("Delete this exercise?")) return;
+    state.exercises = state.exercises.filter(function(e){return e.id!==id;});
+    state.routines.forEach(function(r){ r.exerciseIds = (r.exerciseIds||[]).filter(function(x){return x!==id;}); });
+    save(); render();
+  }
+
+  // ---------- category modal ----------
+  function openCatModal(){ $("catForm").reset(); cFolderTouched=false; $("catModalBackdrop").classList.add("open"); setTimeout(function(){$("cName").focus();},30); }
+  function closeCatModal(){ $("catModalBackdrop").classList.remove("open"); }
+  $("catCancel").onclick = closeCatModal;
+  $("catModalBackdrop").addEventListener("click", function(ev){ if(ev.target===this) closeCatModal(); });
+  var cFolderTouched = false;
+  $("cFolder").addEventListener("input", function(){ cFolderTouched = true; });
+  $("cName").addEventListener("input", function(){
+    if(!cFolderTouched) $("cFolder").value = $("cName").value;
+  });
+  $("catForm").addEventListener("submit", function(ev){
+    ev.preventDefault();
+    var name = $("cName").value.trim();
+    var folder = $("cFolder").value.trim();
+    if(!name || !folder) return;
+    state.categories.push({id:"cat-"+Date.now(), name:name, folder:folder, color:$("cColor").value, order: state.categories.length});
+    save(); render();
+    toast("Category added — now create videos/"+folder);
+    closeCatModal();
+  });
+
+  // ---------- routine modal ----------
+  var routinePicks = [];
+  function openRoutineModal(){
+    routinePicks = [];
+    $("rName").value = "";
+    renderRoutineChecklist();
+    $("routineModalBackdrop").classList.add("open");
+    setTimeout(function(){$("rName").focus();},30);
+  }
+  function closeRoutineModal(){ $("routineModalBackdrop").classList.remove("open"); }
+  $("routineCancel").onclick = closeRoutineModal;
+  $("routineModalBackdrop").addEventListener("click", function(ev){ if(ev.target===this) closeRoutineModal(); });
+  function renderRoutineChecklist(){
+    var el = $("routineChecklist");
+    if(state.exercises.length===0){ el.innerHTML='<div class="empty">Add exercises first, then build routines from them.</div>'; return; }
+    el.innerHTML = state.exercises.map(function(e){
+      var c = catById(e.category);
+      var idx = routinePicks.indexOf(e.id);
+      return '<label class="checkrow" data-pick="'+e.id+'">'+
+        '<span class="band-dot" style="background:'+(c?esc(c.color):"var(--line)")+'"></span>'+
+        '<span>'+esc(e.title)+'</span>'+
+        '<span class="cat">'+(c?esc(c.name):"")+(idx>-1?" · #"+(idx+1):"")+'</span>'+
+      '</label>';
+    }).join("");
+    el.querySelectorAll("[data-pick]").forEach(function(row){
+      row.onclick=function(){
+        var id = row.getAttribute("data-pick");
+        var i = routinePicks.indexOf(id);
+        if(i>-1) routinePicks.splice(i,1); else routinePicks.push(id);
+        renderRoutineChecklist();
+      };
+    });
+  }
+  $("routineForm").addEventListener("submit", function(ev){
+    ev.preventDefault();
+    var name = $("rName").value.trim();
+    if(!name || routinePicks.length===0){ toast("Name it and pick at least one exercise"); return; }
+    state.routines.push({id:"routine-"+Date.now(), name:name, exerciseIds:routinePicks.slice()});
+    save(); render();
+    toast("Routine saved");
+    closeRoutineModal();
+  });
+  function deleteRoutine(id){
+    if(!confirm("Delete this routine?")) return;
+    state.routines = state.routines.filter(function(r){return r.id!==id;});
+    save(); render();
+  }
+
+  // ---------- backup / restore ----------
+  function doBackup(){
+    var blob = new Blob([JSON.stringify({categories:state.categories, exercises:state.exercises, routines:state.routines}, null, 2)], {type:"application/json"});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    var stamp = new Date().toISOString().slice(0,10);
+    a.href = url; a.download = "stretch-deck-backup-"+stamp+".json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+    toast("Backup downloaded");
+  }
+  $("importInput").addEventListener("change", function(){
+    var f = this.files && this.files[0];
+    this.value = "";
+    if(!f) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try{
+        var parsed = JSON.parse(reader.result);
+        if(!confirm("Replace your current library with this backup? This can't be undone.")) return;
+        state.categories = parsed.categories || [];
+        state.exercises = parsed.exercises || [];
+        state.routines = parsed.routines || [];
+        save(); render();
+        toast("Restored from backup");
+      }catch(e){ toast("That file doesn't look like a valid backup"); }
+    };
+    reader.readAsText(f);
+  });
+
+  // ---------- player ----------
+  var playerState = null;
+  function parseSeconds(duration){
+    if(!duration) return null;
+    var m = duration.match(/(\d+(?:\.\d+)?)\s*(s|sec|secs|second|seconds|m|min|mins|minute|minutes)\b/i);
+    if(!m) return null;
+    var n = parseFloat(m[1]);
+    var unit = m[2].toLowerCase();
+    if(unit[0]==="m") n *= 60;
+    return Math.round(n);
+  }
+  function startRoutine(routineId){
+    var r = state.routines.find(function(x){return x.id===routineId;});
+    if(!r || !r.exerciseIds || !r.exerciseIds.length) return;
+    playerState = {ids:r.exerciseIds.slice(), i:0, secondsLeft:0, paused:false, timerId:null};
+    $("player").classList.add("open");
+    showPlayerStep();
+  }
+  function stopRoutine(){
+    if(playerState && playerState.timerId) clearInterval(playerState.timerId);
+    playerState = null;
+    $("player").classList.remove("open");
+    var vid = $("playerVideo");
+    vid.pause(); vid.removeAttribute("src"); vid.load(); vid.style.display = "none";
+  }
+  function showPlayerStep(){
+    if(!playerState) return;
+    if(playerState.timerId){ clearInterval(playerState.timerId); playerState.timerId=null; }
+    var id = playerState.ids[playerState.i];
+    var e = exById(id);
+    if(!e){ playerNext(); return; }
+    var c = catById(e.category);
+    $("playerBand").style.background = c?c.color:"var(--accent)";
+    $("playerProgress").textContent = (playerState.i+1)+" / "+playerState.ids.length;
+    $("playerTitle").textContent = e.title;
+    $("playerMeta").textContent = [e.equipment].filter(Boolean).join(" · ") || "";
+    $("playerNotes").textContent = e.notes || "";
+    $("playerWatch").style.visibility = e.link ? "visible" : "hidden";
+    $("playerWatch").onclick = function(){ if(e.link) window.open(e.link, "_blank", "noopener"); };
+    $("playerPrev").disabled = playerState.i===0;
+
+    var vid = $("playerVideo"), missing = $("playerVideoMissing");
+    if(e.videoFile){
+      vid.src = videoPath(c, e.videoFile);
+      vid.style.display = "block";
+      vid.currentTime = 0;
+      missing.style.display = "none";
+      vid.onerror = function(){ vid.style.display="none"; missing.style.display="block"; };
+    } else {
+      vid.pause(); vid.removeAttribute("src"); vid.load();
+      vid.style.display = "none";
+      missing.style.display = "none";
+    }
+
+    var secs = parseSeconds(e.duration);
+    if(secs){
+      playerState.secondsLeft = secs;
+      playerState.paused = false;
+      $("playerPauseResume").style.visibility = "visible";
+      $("playerPauseResume").textContent = "Pause";
+      updateTimerDisplay();
+      playerState.timerId = setInterval(function(){
+        if(playerState.paused) return;
+        playerState.secondsLeft--;
+        updateTimerDisplay();
+        if(playerState.secondsLeft<=0){ clearInterval(playerState.timerId); playerState.timerId=null; playerNext(true); }
+      }, 1000);
+    } else {
+      $("playerTimer").textContent = e.duration || "—";
+      $("playerPauseResume").style.visibility = "hidden";
+    }
+  }
+  function updateTimerDisplay(){
+    var s = Math.max(0, playerState.secondsLeft);
+    var mm = String(Math.floor(s/60)).padStart(2,"0");
+    var ss = String(s%60).padStart(2,"0");
+    $("playerTimer").textContent = mm+":"+ss;
+  }
+  function playerNext(auto){
+    if(!playerState) return;
+    if(playerState.i >= playerState.ids.length-1){
+      stopRoutine();
+      toast(auto?"Routine complete 🎉":"Routine ended");
+      return;
+    }
+    playerState.i++;
+    showPlayerStep();
+  }
+  function playerPrev(){
+    if(!playerState || playerState.i===0) return;
+    playerState.i--;
+    showPlayerStep();
+  }
+  $("playerNext").onclick = function(){ playerNext(false); };
+  $("playerPrev").onclick = playerPrev;
+  $("playerExit").onclick = stopRoutine;
+  $("playerPauseResume").onclick = function(){
+    if(!playerState) return;
+    playerState.paused = !playerState.paused;
+    $("playerPauseResume").textContent = playerState.paused ? "Resume" : "Pause";
+  };
+
+  // ---------- misc ----------
+  window.addEventListener("scroll", function(){
+    $("topbar").classList.toggle("scrolled", window.scrollY>4);
+  });
+  $("setupBannerClose").onclick = function(){ $("setupBanner").style.display = "none"; try{ localStorage.setItem("stretchdeck:bannerDismissed","1"); }catch(e){} };
+
+  window.addEventListener("beforeinstallprompt", function(ev){
+    ev.preventDefault();
+    deferredInstallPrompt = ev;
+    if(state.route.view !== "category") renderTopbar();
+  });
+  if("serviceWorker" in navigator){
+    window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); });
+  }
+
+  load();
+  try{ if(!localStorage.getItem("stretchdeck:bannerDismissed")) $("setupBanner").style.display = "block"; }
+  catch(e){ $("setupBanner").style.display = "block"; }
+  render();
+})();
+</script>
+</body>
+</html>
