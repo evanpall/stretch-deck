@@ -74,6 +74,15 @@ vanilla JS in one file.
 
 ## Changelog (most recent first)
 
+- **2026-09-13** — UI/UX pass after a mobile-viewport visual audit: collapsed the
+  setup banner to a one-line summary with a "Show details" toggle, added a fade
+  on the scrollable category-chip row, made exercise cards stack to one column
+  under 480px (fixes placeholder titles wrapping under their action buttons),
+  bumped icon buttons (gear, delete) from 32px to 44px for tap targets, made
+  category cards a compact single-line row under 480px instead of tall cards,
+  gave card/routine titles an explicit `color` instead of relying on the
+  browser's native button-text default, and added a category-accent border
+  around exercise videos. Bumped `SHELL_CACHE` to `v4`.
 - **2026-09-13** — Added `mergeNewSeeds()` so new seed videos added to the code
   automatically appear for phones that already ran the app before (previously
   `SEED_EXERCISES` only applied on a true first run). Bumped `SHELL_CACHE` to

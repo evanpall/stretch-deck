@@ -113,13 +113,23 @@
     position:relative; overflow:hidden;
   }
   .cat-card::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background:var(--band); }
-  .cat-card .name{font-size:20px; font-weight:600; line-height:1.15; padding-right:6px;}
+  .cat-card .name{font-size:20px; font-weight:600; line-height:1.15; padding-right:6px; color:var(--ink);}
   .cat-card .count{font-size:13px; color:var(--ink-dim); margin-top:auto;}
   .cat-card .count b{color:var(--ink); font-family:"IBM Plex Mono"; font-weight:600;}
   .cat-card-new{
     border:1px dashed var(--line); background:transparent; border-radius:14px;
     display:flex; align-items:center; justify-content:center; min-height:118px;
     color:var(--ink-dim); font-size:14px; gap:6px;
+  }
+  @media (max-width:480px){
+    .cat-grid{ gap:8px; }
+    .cat-card{
+      flex-direction:row; align-items:center; justify-content:space-between;
+      min-height:0; padding:12px 16px; gap:10px;
+    }
+    .cat-card .name{ font-size:16px; padding-right:0; }
+    .cat-card .count{ margin-top:0; white-space:nowrap; }
+    .cat-card-new{ min-height:0; padding:12px 16px; }
   }
 
   .ex-list{display:flex; flex-direction:column; gap:10px;}
@@ -128,13 +138,18 @@
     padding:14px 16px; box-shadow:var(--shadow);
     display:grid; grid-template-columns:1fr auto; gap:10px 14px; align-items:start;
   }
-  .ex-main .title{font-size:17px; font-weight:600; margin:0 0 3px;}
+  .ex-main .title{font-size:17px; font-weight:600; margin:0 0 3px; color:var(--ink);}
   .ex-meta{display:flex; flex-wrap:wrap; gap:6px 10px; font-size:12.5px; color:var(--ink-dim); margin-bottom:6px;}
   .ex-meta span{display:inline-flex; align-items:center; gap:4px;}
   .ex-notes{font-size:13.5px; color:var(--ink-dim); line-height:1.45; max-width:60ch;}
   .ex-actions{display:flex; flex-direction:column; gap:6px; align-items:stretch;}
   .ex-actions .btn{justify-content:center;}
   .ex-rowbtns{display:flex; gap:6px;}
+  @media (max-width:480px){
+    .ex-card{ grid-template-columns:1fr; }
+    .ex-actions{ flex-direction:row; flex-wrap:wrap; align-items:center; }
+    .ex-actions .btn{ flex:none; }
+  }
   .tag{
     display:inline-block; font-size:11px; text-transform:uppercase; letter-spacing:.06em;
     padding:2px 7px; border-radius:5px; background:var(--surface-2); color:var(--ink-dim); font-weight:600;
@@ -147,7 +162,7 @@
     padding:14px 16px; box-shadow:var(--shadow);
     display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
   }
-  .routine-card .name{font-size:17px; font-weight:600;}
+  .routine-card .name{font-size:17px; font-weight:600; color:var(--ink);}
   .routine-card .sub{font-size:12.5px; color:var(--ink-dim);}
 
   .modal-backdrop{
@@ -217,6 +232,8 @@
   .cat-switcher{
     display:flex; gap:8px; overflow-x:auto; padding:2px 2px 16px; margin-bottom:-2px;
     -webkit-overflow-scrolling:touch; scrollbar-width:none;
+    mask-image:linear-gradient(to right, black calc(100% - 28px), transparent 100%);
+    -webkit-mask-image:linear-gradient(to right, black calc(100% - 28px), transparent 100%);
   }
   .cat-switcher::-webkit-scrollbar{display:none;}
   .cat-pill{
@@ -234,9 +251,9 @@
     font-size:13.5px; z-index:300; opacity:0; pointer-events:none; transition:opacity .25s, transform .25s;
   }
   .toast.show{opacity:1; transform:translateX(-50%) translateY(-6px);}
-  .icon-btn{width:32px; height:32px; border-radius:8px; border:1px solid var(--line); background:var(--surface); display:inline-flex; align-items:center; justify-content:center; font-size:15px; color:var(--ink-dim);}
+  .icon-btn{width:44px; height:44px; border-radius:10px; border:1px solid var(--line); background:var(--surface); display:inline-flex; align-items:center; justify-content:center; font-size:16px; color:var(--ink-dim); flex:none;}
 
-  .ex-video{width:100%; border-radius:10px; margin:8px 0; background:#000; display:block; max-height:240px;}
+  .ex-video{width:100%; border-radius:10px; margin:8px 0; background:#000; display:block; max-height:240px; border:2px solid var(--band);}
   .ex-video-missing{
     font-size:12.5px; color:#a94a2c; background:rgba(185,74,44,.1); border:1px solid rgba(185,74,44,.25);
     border-radius:8px; padding:6px 9px; margin:8px 0;
@@ -252,6 +269,11 @@
   #setupBanner b{color:var(--ink);}
   #setupBanner code{background:var(--surface-2); padding:1px 5px; border-radius:4px; font-family:"IBM Plex Mono";}
   #setupBanner .close{float:right; border:none; background:none; color:var(--ink-dim); font-size:16px;}
+  #setupBanner .banner-detail{margin-top:8px;}
+  #setupBanner .banner-toggle{
+    background:none; border:none; color:var(--accent); font-weight:600; font-size:12.5px;
+    padding:0; margin-left:2px; text-decoration:underline; text-underline-offset:2px; cursor:pointer;
+  }
 </style>
 </head>
 <body>
@@ -270,11 +292,14 @@
 
   <div id="setupBanner" style="display:none;">
     <button class="close" id="setupBannerClose" aria-label="Dismiss">✕</button>
-    Videos play from <code>videos/&lt;category folder&gt;/</code>, right next to this file — each category owns one
-    subfolder, matched by name. When adding an exercise, pick the category first, then type the file name or use
-    <b>Browse</b> to fill it in (Browse only reads the name — put the actual mp4 in that folder yourself). Everything
-    you add is saved in this browser (<code>localStorage</code>) — use <b>Backup</b> occasionally so a cleared
-    browser can't lose your library.
+    Videos play from <code>videos/&lt;category folder&gt;/</code>, right next to this file.
+    <button type="button" class="banner-toggle" id="setupBannerToggle">Show details</button>
+    <div class="banner-detail" id="setupBannerDetail" hidden>
+      Each category owns one subfolder, matched by name. When adding an exercise, pick the category first, then type
+      the file name or use <b>Browse</b> to fill it in (Browse only reads the name — put the actual mp4 in that
+      folder yourself). Everything you add is saved in this browser (<code>localStorage</code>) — use <b>Backup</b>
+      occasionally so a cleared browser can't lose your library.
+    </div>
   </div>
 
   <!-- HOME -->
@@ -979,6 +1004,15 @@
     }
   });
   $("setupBannerClose").onclick = function(){ $("setupBanner").style.display = "none"; try{ localStorage.setItem("stretchdeck:bannerDismissed","1"); }catch(e){} };
+  function setBannerExpanded(expanded){
+    $("setupBannerDetail").hidden = !expanded;
+    $("setupBannerToggle").textContent = expanded ? "Hide details" : "Show details";
+    try{ localStorage.setItem("stretchdeck:bannerExpanded", expanded ? "1" : "0"); }catch(e){}
+  }
+  $("setupBannerToggle").onclick = function(){ setBannerExpanded($("setupBannerDetail").hidden); };
+  var bannerWasExpanded = false;
+  try{ bannerWasExpanded = localStorage.getItem("stretchdeck:bannerExpanded")==="1"; }catch(e){}
+  setBannerExpanded(bannerWasExpanded);
 
   window.addEventListener("beforeinstallprompt", function(ev){
     ev.preventDefault();
