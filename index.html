@@ -439,6 +439,7 @@
 
   // ---------- local persistence (this browser only) ----------
   var storageOk = true;
+  var dismissedSeedIds = [];
   function load(){
     try{
       var raw = localStorage.getItem(STORAGE_KEY);
@@ -447,6 +448,8 @@
         state.categories = parsed.categories || [];
         state.exercises = parsed.exercises || [];
         state.routines = parsed.routines || [];
+        dismissedSeedIds = parsed.dismissedSeedIds || [];
+        mergeNewSeeds();
         return;
       }
     }catch(e){ storageOk = false; }
@@ -456,10 +459,27 @@
     state.routines = [];
     save();
   }
+  // Pulls in any category/exercise added to DEFAULT_CATEGORIES/SEED_EXERCISES
+  // since this browser last loaded (e.g. a new video dropped in the videos/
+  // folder and committed) without touching anything the user has already
+  // edited or deleted here.
+  function mergeNewSeeds(){
+    var addedCats = 0, addedEx = 0;
+    DEFAULT_CATEGORIES.forEach(function(c){
+      if(!catById(c.id)){ state.categories.push(c); addedCats++; }
+    });
+    SEED_EXERCISES.forEach(function(e){
+      if(dismissedSeedIds.indexOf(e.id)===-1 && !exById(e.id)){
+        state.exercises.push(e); addedEx++;
+      }
+    });
+    if(addedCats || addedEx) save();
+  }
   function save(){
     try{
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        categories: state.categories, exercises: state.exercises, routines: state.routines
+        categories: state.categories, exercises: state.exercises, routines: state.routines,
+        dismissedSeedIds: dismissedSeedIds
       }));
     }catch(e){
       storageOk = false;
@@ -743,6 +763,7 @@
     if(!confirm("Delete this exercise?")) return;
     state.exercises = state.exercises.filter(function(e){return e.id!==id;});
     state.routines.forEach(function(r){ r.exerciseIds = (r.exerciseIds||[]).filter(function(x){return x!==id;}); });
+    if(/^seed-/.test(id) && dismissedSeedIds.indexOf(id)===-1) dismissedSeedIds.push(id);
     save(); render();
   }
 
