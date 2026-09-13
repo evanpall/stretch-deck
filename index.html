@@ -200,6 +200,34 @@
     padding:22px; font-size:13px; color:var(--ink-dim);
   }
 
+  .menu-wrap{position:relative;}
+  .menu-panel{
+    position:absolute; top:calc(100% + 8px); right:0; z-index:60; display:none; flex-direction:column;
+    min-width:230px; background:var(--surface); border:1px solid var(--line); border-radius:12px;
+    box-shadow:var(--shadow); padding:6px;
+  }
+  .menu-panel.open{display:flex;}
+  .menu-item{
+    text-align:left; padding:10px 12px; border-radius:8px; background:none; border:none;
+    color:var(--ink); font-size:14px; font-weight:500; display:flex; align-items:center; gap:8px;
+  }
+  .menu-item:hover{background:var(--surface-2);}
+  .menu-sep{height:1px; background:var(--line); margin:5px 4px;}
+
+  .cat-switcher{
+    display:flex; gap:8px; overflow-x:auto; padding:2px 2px 16px; margin-bottom:-2px;
+    -webkit-overflow-scrolling:touch; scrollbar-width:none;
+  }
+  .cat-switcher::-webkit-scrollbar{display:none;}
+  .cat-pill{
+    flex:none; display:inline-flex; align-items:center; gap:7px; padding:8px 14px 8px 12px;
+    border-radius:99px; border:1px solid var(--line); background:var(--surface);
+    color:var(--ink-dim); font-size:13.5px; font-weight:600; white-space:nowrap;
+  }
+  .cat-pill .dot{width:7px; height:7px; border-radius:50%; background:var(--band); flex:none;}
+  .cat-pill.active{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+  .cat-pill.active .dot{background:var(--accent-ink);}
+
   .toast{
     position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
     background:var(--ink); color:var(--ground); padding:10px 16px; border-radius:99px;
@@ -260,6 +288,7 @@
 
   <!-- CATEGORY -->
   <div class="view" id="view-category">
+    <div class="cat-switcher" id="catSwitcher"></div>
     <div class="ex-list" id="exList"></div>
   </div>
 </div>
@@ -526,16 +555,26 @@
     } else {
       crumbs.innerHTML = '<span>Stored locally in this browser</span>';
       actions.innerHTML =
-        '<button class="btn" id="newRoutineBtn">+ Routine</button>'+
-        '<button class="btn" id="newCatBtn">+ Category</button>'+
-        (deferredInstallPrompt?'<button class="btn ghost" id="installBtn" title="Add Stretch Deck to your home screen">📲 Install app</button>':"")+
-        '<button class="btn ghost" id="offlineDownloadBtn" title="Cache every video on this device so they play with no signal at the gym">⬇ Download for offline</button>'+
-        '<button class="btn ghost" id="offlineClearBtn" title="Remove downloaded videos to free up space">Clear offline</button>'+
-        '<button class="btn ghost" id="backupBtn" title="Download your library as a JSON file">Backup</button>'+
-        '<button class="btn ghost" id="restoreBtn" title="Restore from a Backup file">Restore</button>';
+        '<button class="btn primary" id="newRoutineBtn">+ Routine</button>'+
+        '<div class="menu-wrap">'+
+          '<button class="icon-btn" id="menuBtn" aria-label="Menu" title="Menu">⚙</button>'+
+          '<div class="menu-panel" id="menuPanel">'+
+            '<button class="menu-item" id="newCatBtn">+ New category</button>'+
+            '<div class="menu-sep"></div>'+
+            (deferredInstallPrompt?'<button class="menu-item" id="installBtn">📲 Install app</button>':"")+
+            '<button class="menu-item" id="offlineDownloadBtn">⬇ Download for offline</button>'+
+            '<button class="menu-item" id="offlineClearBtn">🗑 Clear offline videos</button>'+
+            '<div class="menu-sep"></div>'+
+            '<button class="menu-item" id="backupBtn">⬆ Backup library</button>'+
+            '<button class="menu-item" id="restoreBtn">⬇ Restore from backup</button>'+
+          '</div>'+
+        '</div>';
       $("newRoutineBtn").onclick = openRoutineModal;
-      $("newCatBtn").onclick = openCatModal;
+      var menuPanel = $("menuPanel");
+      $("menuBtn").onclick = function(ev){ ev.stopPropagation(); menuPanel.classList.toggle("open"); };
+      $("newCatBtn").onclick = function(){ menuPanel.classList.remove("open"); openCatModal(); };
       if($("installBtn")) $("installBtn").onclick = function(){
+        menuPanel.classList.remove("open");
         var p = deferredInstallPrompt;
         if(!p) return;
         deferredInstallPrompt = null;
@@ -543,9 +582,9 @@
         p.userChoice.finally(renderTopbar);
       };
       $("offlineDownloadBtn").onclick = downloadAllVideosOffline;
-      $("offlineClearBtn").onclick = clearOfflineVideos;
-      $("backupBtn").onclick = doBackup;
-      $("restoreBtn").onclick = function(){ $("importInput").click(); };
+      $("offlineClearBtn").onclick = function(){ menuPanel.classList.remove("open"); clearOfflineVideos(); };
+      $("backupBtn").onclick = function(){ menuPanel.classList.remove("open"); doBackup(); };
+      $("restoreBtn").onclick = function(){ menuPanel.classList.remove("open"); $("importInput").click(); };
     }
   }
 
@@ -582,11 +621,26 @@
     }
   }
 
+  function renderCatSwitcher(activeId){
+    var el = $("catSwitcher");
+    el.innerHTML = state.categories.map(function(cat){
+      return '<button class="cat-pill'+(cat.id===activeId?' active':'')+'" data-cat="'+cat.id+'" style="--band:'+esc(cat.color)+'">'+
+        '<span class="dot"></span>'+esc(cat.name)+
+      '</button>';
+    }).join("");
+    el.querySelectorAll("[data-cat]").forEach(function(btn){
+      btn.onclick = function(){ goCategory(btn.getAttribute("data-cat")); };
+    });
+    var activeEl = el.querySelector(".active");
+    if(activeEl) activeEl.scrollIntoView({inline:"center", block:"nearest"});
+  }
+
   function renderCategory(){
     var c = catById(state.route.catId);
     var list = exercisesFor(state.route.catId);
     var el = $("exList");
     if(!c){ goHome(); return; }
+    renderCatSwitcher(c.id);
     if(list.length===0){
       el.innerHTML = '<div class="empty">Nothing here yet. Add one — a duration, a cue, and either a local video file or a reel link.</div>';
       return;
@@ -896,6 +950,12 @@
   // ---------- misc ----------
   window.addEventListener("scroll", function(){
     $("topbar").classList.toggle("scrolled", window.scrollY>4);
+  });
+  document.addEventListener("click", function(ev){
+    var panel = $("menuPanel");
+    if(panel && panel.classList.contains("open") && !panel.contains(ev.target) && ev.target.id!=="menuBtn"){
+      panel.classList.remove("open");
+    }
   });
   $("setupBannerClose").onclick = function(){ $("setupBanner").style.display = "none"; try{ localStorage.setItem("stretchdeck:bannerDismissed","1"); }catch(e){} };
 

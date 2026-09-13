@@ -1,6 +1,6 @@
 // Stretch Deck service worker — bump SHELL_CACHE on every deploy of index.html
 // so returning phones pick up the new shell instead of a stale cached copy.
-var SHELL_CACHE = "stretchdeck-shell-v1";
+var SHELL_CACHE = "stretchdeck-shell-v2";
 var VIDEO_CACHE = "stretchdeck-videos-v1";
 
 var SHELL_FILES = [
