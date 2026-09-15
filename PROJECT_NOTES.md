@@ -74,6 +74,8 @@ vanilla JS in one file.
 
 ## Changelog (most recent first)
 
+- **2026-09-15** — Added seed entry for a new Back video
+  (`AQMC_7GM6a086...sIISSQ.mp4`). Bumped `SHELL_CACHE` to `v5`.
 - **2026-09-13** — UI/UX pass after a mobile-viewport visual audit: collapsed the
   setup banner to a one-line summary with a "Show details" toggle, added a fade
   on the scrollable category-chip row, made exercise cards stack to one column
