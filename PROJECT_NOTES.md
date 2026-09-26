@@ -74,6 +74,9 @@ vanilla JS in one file.
 
 ## Changelog (most recent first)
 
+- **2026-09-26** — Added seed entries for two new videos: one in `videos/Back/`
+  (`AQNepMF3h...zotQOxNRRYm71x9xI.mp4`) and one in `videos/Warm-up- Strech/`
+  (`AQMD9GqiGV4Qg7...ZfpedHMjWGe-mlHZKZw.mp4`). Bumped `SHELL_CACHE` to `v7`.
 - **2026-09-22** — Added seed entries for a new video that belongs to both
   Abductors and Core Rotation (`AQN707BV746tS...sIISSQ.mp4`, saved in both
   `videos/Abductors/` and `videos/Core Rotation/`). Bumped `SHELL_CACHE` to
