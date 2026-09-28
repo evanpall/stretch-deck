@@ -74,6 +74,9 @@ vanilla JS in one file.
 
 ## Changelog (most recent first)
 
+- **2026-09-28** — Added seed entry `seed-89` for a new Core Rotation video
+  (`core exercise set.mp4`, titled "Core exercise set"). Bumped `SHELL_CACHE`
+  to `v8`.
 - **2026-09-26** — Added seed entries for two new videos: one in `videos/Back/`
   (`AQNepMF3h...zotQOxNRRYm71x9xI.mp4`) and one in `videos/Warm-up- Strech/`
   (`AQMD9GqiGV4Qg7...ZfpedHMjWGe-mlHZKZw.mp4`). Bumped `SHELL_CACHE` to `v7`.
