@@ -74,6 +74,11 @@ vanilla JS in one file.
 
 ## Changelog (most recent first)
 
+- **2026-09-30** — Audited every `videos/` folder against `SEED_EXERCISES` and
+  added seed entries `seed-91`–`seed-100` for 10 files uploaded on 2026-09-13
+  that never got one (2 Core Rotation, 4 Hip Mobility, 4 Isometric Stability).
+  All 100 `.mp4` files on disk now have a seed entry. Bumped `SHELL_CACHE` to
+  `v10`.
 - **2026-09-30** — Added seed entry `seed-90` for a new Hip Mobility video
   (`hip strength.mp4`, titled "Hip strength"). Bumped `SHELL_CACHE` to `v9`.
 - **2026-09-28** — Added seed entry `seed-89` for a new Core Rotation video
