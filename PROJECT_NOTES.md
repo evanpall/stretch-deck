@@ -44,6 +44,19 @@ vanilla JS in one file.
 
 ## Workflow: adding a new video
 
+**Automated (added 2026-09-30):** drop the file into the right
+`videos/<Category>/` folder, then double-click `add-new-videos.bat` in the
+project root. It runs `tools/add_new_videos.py`, which does steps 2–4 below for
+every video file that has no seed entry yet, then waits until GitHub Pages
+serves the new version and checks each new video URL. Short file names become
+the title (`hip strength.mp4` → "Hip strength"); long downloader names get an
+`Untitled clip N (rename me)` placeholder. It skips (and reports) videos in
+folders that aren't a category, loose files directly in `videos/`, and files
+of 100 MB or more. `add-new-videos.bat --dry-run` only lists what it would add.
+Steps 5–6 are still manual.
+
+The manual steps, for reference:
+
 1. Drop the `.mp4` into the right `videos/<Category>/` folder.
 2. Add a matching entry to `SEED_EXERCISES` in `index.html` (id, category,
    `videoFile` = exact filename, placeholder title like
