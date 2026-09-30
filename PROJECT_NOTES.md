@@ -87,6 +87,9 @@ The manual steps, for reference:
 
 ## Changelog (most recent first)
 
+- **2026-09-30** — `add-new-videos.bat` added 1 video(s): `seed-101` Hip
+  Mobility, "Hip mob exer 50" (`hip mob exer_50.mp4`). Bumped `SHELL_CACHE` to
+  `v11`.
 - **2026-09-30** — Audited every `videos/` folder against `SEED_EXERCISES` and
   added seed entries `seed-91`–`seed-100` for 10 files uploaded on 2026-09-13
   that never got one (2 Core Rotation, 4 Hip Mobility, 4 Isometric Stability).
