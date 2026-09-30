@@ -74,6 +74,8 @@ vanilla JS in one file.
 
 ## Changelog (most recent first)
 
+- **2026-09-30** — Added seed entry `seed-90` for a new Hip Mobility video
+  (`hip strength.mp4`, titled "Hip strength"). Bumped `SHELL_CACHE` to `v9`.
 - **2026-09-28** — Added seed entry `seed-89` for a new Core Rotation video
   (`core exercise set.mp4`, titled "Core exercise set"). Bumped `SHELL_CACHE`
   to `v8`.
