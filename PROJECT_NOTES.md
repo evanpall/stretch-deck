@@ -87,6 +87,9 @@ The manual steps, for reference:
 
 ## Changelog (most recent first)
 
+- **2026-10-01** — `add-new-videos.bat` added 1 video(s): `seed-102` Core
+  Rotation, "Core stability" (`core stability.mp4`). Bumped `SHELL_CACHE` to
+  `v12`.
 - **2026-09-30** — `add-new-videos.bat` added 1 video(s): `seed-101` Hip
   Mobility, "Hip mob exer 50" (`hip mob exer_50.mp4`). Bumped `SHELL_CACHE` to
   `v11`.
