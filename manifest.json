@@ -1,6 +1,6 @@
 {
-  "name": "Stretch Deck",
-  "short_name": "Stretch Deck",
+  "name": "Askisis",
+  "short_name": "Askisis",
   "description": "Exercise and stretch video library — browse by category and press play at the gym.",
   "start_url": "./index.html",
   "scope": "./",

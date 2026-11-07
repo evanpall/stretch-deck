@@ -1,4 +1,4 @@
-# Stretch Deck — Project Notes
+# Askisis (formerly Stretch Deck) — Project Notes
 
 Point Claude here at the start of a new session to catch up fast.
 
@@ -87,6 +87,11 @@ The manual steps, for reference:
 
 ## Changelog (most recent first)
 
+- **2026-11-07** — Renamed the app from "Stretch Deck" to "Askisis" (page
+  title, header, manifest name). URL, storage keys and cache names keep the
+  old `stretchdeck` prefix so installs and saved data are unaffected. Also
+  added the `full-body` category (folder `Full body`). Bumped `SHELL_CACHE`
+  to `v14`.
 - **2026-11-07** — `add-new-videos.bat` added 2 video(s): `seed-103` Full Body,
   "Full body 1" (`full body 1.mp4`); `seed-104` Full Body, "Full body 2" (`full
   body 2.mp4`). Bumped `SHELL_CACHE` to `v13`.
