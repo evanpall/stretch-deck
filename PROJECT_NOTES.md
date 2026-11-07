@@ -87,6 +87,9 @@ The manual steps, for reference:
 
 ## Changelog (most recent first)
 
+- **2026-11-07** — `add-new-videos.bat` added 2 video(s): `seed-103` Full Body,
+  "Full body 1" (`full body 1.mp4`); `seed-104` Full Body, "Full body 2" (`full
+  body 2.mp4`). Bumped `SHELL_CACHE` to `v13`.
 - **2026-10-01** — `add-new-videos.bat` added 1 video(s): `seed-102` Core
   Rotation, "Core stability" (`core stability.mp4`). Bumped `SHELL_CACHE` to
   `v12`.
